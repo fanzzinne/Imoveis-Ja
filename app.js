@@ -262,8 +262,7 @@ const app = {
         content.innerHTML = `
             <div class="max-w-2xl mx-auto text-center space-y-8 py-10 animate-in zoom-in duration-500">
                 <div class="relative w-32 h-32 mx-auto bg-primary/20 rounded-full flex items-center justify-center border-4 border-primary shadow-2xl shadow-primary/30">
-                    <img src="logo.png" class="w-20 h-auto" onerror="this.classList.add('hidden'); document.getElementById('icon-house').classList.remove('hidden')">
-                    <i id="icon-house" class="fas fa-house-chimney text-4xl text-primary hidden"></i>
+                    <img src="https://api.clau.ai/v1/files/input_file_0.png" class="w-24 h-auto">
                 </div>
                 <div>
                     <h1 class="text-4xl font-black mb-4 uppercase tracking-tighter">${CONFIG.SITE_NAME}</h1>
