@@ -41,25 +41,34 @@ const app = {
     },
 
     handleInstallPrompt: function() {
-        let deferredPrompt;
+        this.deferredPrompt = null;
         window.addEventListener('beforeinstallprompt', (e) => {
             e.preventDefault();
-            deferredPrompt = e;
+            this.deferredPrompt = e;
 
-            // Exibe o convite de instalação após 5 segundos de navegação
-            setTimeout(() => {
-                if (deferredPrompt) {
-                    this.showToast('Instale nosso App para melhor experiência!');
-                    // Tenta disparar o prompt (alguns navegadores exigem clique, outros permitem)
-                    document.body.addEventListener('click', () => {
-                        if (deferredPrompt) {
-                            deferredPrompt.prompt();
-                            deferredPrompt = null;
-                        }
-                    }, { once: true });
-                }
-            }, 5000);
+            // Verifica se já está instalado ou em modo standalone
+            const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone;
+
+            if (!isStandalone) {
+                document.getElementById('pwa-banner').classList.remove('hidden');
+            }
         });
+
+        window.addEventListener('appinstalled', () => {
+            this.deferredPrompt = null;
+            document.getElementById('pwa-banner').classList.add('hidden');
+            this.showToast('App instalado com sucesso!');
+        });
+    },
+
+    installPWA: async function() {
+        if (!this.deferredPrompt) return;
+        this.deferredPrompt.prompt();
+        const { outcome } = await this.deferredPrompt.userChoice;
+        if (outcome === 'accepted') {
+            this.deferredPrompt = null;
+            document.getElementById('pwa-banner').classList.add('hidden');
+        }
     },
 
     fetchProperties: async function() {
