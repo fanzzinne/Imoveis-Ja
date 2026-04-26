@@ -42,15 +42,14 @@ const app = {
 
     handleInstallPrompt: function() {
         this.deferredPrompt = null;
-        const isAndroid = /Android/i.test(navigator.userAgent);
         const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone;
 
         window.addEventListener('beforeinstallprompt', (e) => {
+            console.log('beforeinstallprompt disparado');
             e.preventDefault();
             this.deferredPrompt = e;
 
-            if (isAndroid && !isStandalone) {
-                // Versão Android: Mostra o botão no cabeçalho
+            if (!isStandalone) {
                 const btn = document.getElementById('btn-install-android');
                 if (btn) btn.classList.remove('hidden');
             }
@@ -73,9 +72,13 @@ const app = {
     },
 
     installPWA: async function() {
-        if (!this.deferredPrompt) return;
+        if (!this.deferredPrompt) {
+            this.showToast('O App já está instalado ou não é compatível.');
+            return;
+        }
         this.deferredPrompt.prompt();
         const { outcome } = await this.deferredPrompt.userChoice;
+        console.log(`Usuário escolheu: ${outcome}`);
         if (outcome === 'accepted') {
             this.deferredPrompt = null;
             const btn = document.getElementById('btn-install-android');

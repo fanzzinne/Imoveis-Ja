@@ -2,16 +2,30 @@
   "name": "IMÓVEIS JÁ | Premium Real Estate",
   "short_name": "Imóveis Já",
   "description": "Sua parceira ideal na busca pelo lar dos seus sonhos.",
-  "start_url": "index.html",
+  "start_url": "./index.html",
   "display": "standalone",
   "background_color": "#0f1115",
   "theme_color": "#0f1115",
+  "orientation": "portrait",
+  "scope": "./",
   "icons": [
+    {
+      "src": "logo.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
     {
       "src": "logo.png",
       "sizes": "512x512",
       "type": "image/png",
-      "purpose": "any maskable"
+      "purpose": "any"
+    },
+    {
+      "src": "logo.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
     }
   ]
 }
