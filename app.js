@@ -22,7 +22,8 @@ const app = {
     registerSW: function() {
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
-                navigator.serviceWorker.register('./sw.js').then(reg => {
+                navigator.serviceWorker.register('./sw.js', { scope: './' }).then(reg => {
+                    console.log('SW registrado com escopo:', reg.scope);
                     reg.onupdatefound = () => {
                         const installingWorker = reg.installing;
                         installingWorker.onstatechange = () => {
