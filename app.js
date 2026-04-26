@@ -104,11 +104,27 @@ const app = {
 
     fetchProperties: async function() {
         try {
-            const response = await fetch(`${CONFIG.API_URL}?action=informacoes`);
-            this.properties = await response.json();
-            console.log('Dados carregados:', this.properties);
+            console.log('Iniciando busca de imóveis...');
+            const response = await fetch(`${CONFIG.API_URL}?action=informacoes`, {
+                method: 'GET',
+                mode: 'cors',
+                cache: 'no-cache'
+            });
+
+            if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+
+            const data = await response.json();
+
+            if (Array.isArray(data)) {
+                this.properties = data;
+                console.log('Imóveis carregados com sucesso:', this.properties.length);
+            } else {
+                console.error('Dados recebidos não são um array:', data);
+                this.properties = this.getMockData();
+            }
         } catch (error) {
-            console.error('Erro:', error);
+            console.error('Erro ao carregar imóveis da API:', error);
+            this.showToast('Usando dados de demonstração (Offline/Erro)');
             this.properties = this.getMockData();
         }
     },
