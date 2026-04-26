@@ -2,7 +2,7 @@ const CONFIG = {
     // 1. CONFIGURAÇÕES VISUAIS (Ajuste aqui diretamente no código)
     SITE_NAME: 'Imóveis Já',
     PRIMARY_COLOR: '#f59e0b',
-    WHATSAPP: '5521999999999',
+    WHATSAPP: '5521988137667',
     LOGO_URL: 'favicon.ico',
     SLOGAN: 'Sua nova história começa aqui',
 
@@ -14,12 +14,79 @@ const app = {
     properties: [],
     carouselIndex: 0,
     filters: { type: 'BUY', category: 'Casa', query: '' },
+    deferredPrompt: null,
 
     init: async function() {
+        this.registerServiceWorker();
+        this.setupInstallTrigger();
         this.applyTheme();
         await this.fetchProperties();
         this.showHome();
         this.startCarousel();
+    },
+
+    registerServiceWorker: function() {
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('sw.js').then(reg => {
+                // Detecta atualização automática
+                reg.onupdatefound = () => {
+                    const installingWorker = reg.installing;
+                    installingWorker.onstatechange = () => {
+                        if (installingWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                            console.log('PWA: Nova versão detectada! Atualizando...');
+                            this.showToast('Atualizando para nova versão...');
+                            setTimeout(() => window.location.reload(), 2000);
+                        }
+                    };
+                };
+            });
+        }
+    },
+
+    setupInstallTrigger: function() {
+        window.addEventListener('beforeinstallprompt', (e) => {
+            // Impede que o navegador mostre o prompt padrão imediatamente
+            e.preventDefault();
+            this.deferredPrompt = e;
+
+            // Mostra o gatilho de instalação após 5 segundos de navegação
+            setTimeout(() => {
+                if (this.deferredPrompt) {
+                    this.showInstallBanner();
+                }
+            }, 5000);
+        });
+
+        window.addEventListener('appinstalled', () => {
+            this.deferredPrompt = null;
+            console.log('PWA: Instalado com sucesso!');
+        });
+    },
+
+    showInstallBanner: function() {
+        if (document.getElementById('install-banner')) return;
+
+        const banner = document.createElement('div');
+        banner.id = 'install-banner';
+        banner.style = `
+            position: fixed; bottom: 100px; left: 50%; transform: translateX(-50%);
+            background: var(--primary); color: black; padding: 1rem 2rem;
+            border-radius: 50px; font-weight: 800; z-index: 10000;
+            display: flex; align-items: center; gap: 15px; box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            cursor: pointer; animation: fadeIn 0.5s ease-out;
+        `;
+        banner.innerHTML = `<i class="fas fa-download"></i> INSTALAR APP`;
+
+        banner.onclick = () => {
+            banner.remove();
+            this.deferredPrompt.prompt();
+            this.deferredPrompt.userChoice.then(choice => {
+                if (choice.outcome === 'accepted') console.log('Usuário aceitou a instalação');
+                this.deferredPrompt = null;
+            });
+        };
+
+        document.body.appendChild(banner);
     },
 
     applyTheme: function() {
@@ -235,97 +302,52 @@ const app = {
         const content = document.getElementById('app-content');
         content.innerHTML = `
             <div class="container animate">
-                <div class="form-card">
-                    <h2 style="margin-bottom:1.5rem">Cadastre seu Imóvel para Venda</h2>
-                    <p style="color:var(--text-dim); margin-bottom:2rem">Preencha os detalhes e anexe fotos. Nossa equipe entrará em contato via e-mail.</p>
+                <div class="form-card" style="text-align:center">
+                    <h2 style="margin-bottom:1rem">Quer vender seu imóvel?</h2>
+                    <p style="color:var(--text-dim); margin-bottom:2rem">Preencha os campos abaixo para iniciar seu atendimento via WhatsApp.</p>
 
-                    <form id="form-venda-proprio">
-                        <div class="form-group">
-                            <label>Seu Nome Completo</label>
-                            <input type="text" id="v-nome" required placeholder="Como podemos te chamar?">
-                        </div>
-                        <div class="form-group">
-                            <label>WhatsApp / Telefone</label>
-                            <input type="text" id="v-contato" required placeholder="(XX) 99999-9999">
-                        </div>
-                        <div class="form-group">
-                            <label>Título do Imóvel</label>
-                            <input type="text" id="v-titulo" required placeholder="Ex: Casa 3 qts no Centro">
-                        </div>
-                        <div class="form-group">
-                            <label>Preço Sugerido (R$)</label>
-                            <input type="number" id="v-preco" required>
-                        </div>
-                        <div class="form-group">
-                            <label>Descrição e Detalhes</label>
-                            <textarea id="v-msg" rows="4" placeholder="Fale um pouco sobre o imóvel..."></textarea>
-                        </div>
-                        <div class="form-group">
-                            <label>Anexar Fotos (Máx 4 fotos)</label>
-                            <input type="file" id="v-fotos" multiple accept="image/*" style="padding: 0.5rem; background: var(--card)">
-                        </div>
+                    <div style="padding-top:1rem; text-align: left;">
+                        <form id="form-venda-whatsapp">
+                            <div class="form-group">
+                                <label style="font-size: 0.85rem; color: var(--text-dim)">Seu Nome Completo</label>
+                                <input type="text" id="v-nome" placeholder="Digite seu nome..." required>
+                            </div>
+                            <div class="form-group">
+                                <label style="font-size: 0.85rem; color: var(--text-dim)">Seu WhatsApp/Contato</label>
+                                <input type="text" id="v-contato" placeholder="(XX) 99999-9999" required>
+                            </div>
+                            <div class="form-group">
+                                <label style="font-size: 0.85rem; color: var(--text-dim)">Breve descrição do imóvel</label>
+                                <textarea id="v-msg" rows="3" placeholder="Ex: Casa 2 quartos no Bairro X..."></textarea>
+                            </div>
 
-                        <button type="button" onclick="app.enviarVendaPropria()" class="btn-main" id="btn-enviar-venda">Enviar Proposta Direta</button>
-                    </form>
+                            <!-- Botão WhatsApp integrado ao formulário -->
+                            <button type="button" onclick="app.abrirWhatsappVenda()" class="btn-main" style="background:#25d366; margin-top:1rem; display:flex; align-items:center; justify-content:center; gap:10px">
+                                <i class="fab fa-whatsapp" style="font-size:1.5rem"></i> Enviar Mensagem
+                            </button>
+                        </form>
+                    </div>
                 </div>
             </div>
         `;
     },
 
-    enviarVendaPropria: async function() {
-        const btn = document.getElementById('btn-enviar-venda');
-        const fotosInput = document.getElementById('v-fotos');
+    abrirWhatsappVenda: function() {
         const nome = document.getElementById('v-nome').value;
         const contato = document.getElementById('v-contato').value;
-        const titulo = document.getElementById('v-titulo').value;
+        const mensagem = document.getElementById('v-msg').value;
 
-        if (!nome || !contato || !titulo) {
-            this.showToast('Por favor, preencha os campos obrigatórios.');
+        if (!nome || !contato) {
+            this.showToast('Por favor, preencha seu nome e contato.');
             return;
         }
 
-        btn.innerText = "Processando fotos e enviando...";
-        btn.disabled = true;
+        const texto = `Olá! Meu nome é ${nome}.%0A` +
+                      `Contato: ${contato}%0A` +
+                      `Gostaria de cadastrar meu imóvel para venda.%0A` +
+                      `Descrição: ${mensagem}`;
 
-        const toBase64 = file => new Promise((resolve, reject) => {
-            const reader = new FileReader();
-            reader.readAsDataURL(file);
-            reader.onload = () => resolve({data: reader.result, type: file.type, name: file.name});
-            reader.onerror = error => reject(error);
-        });
-
-        try {
-            const fotosBase64 = [];
-            for (let file of fotosInput.files) {
-                if (fotosBase64.length < 4) {
-                    fotosBase64.push(await toBase64(file));
-                }
-            }
-
-            const payload = {
-                action: 'venda',
-                nome: nome,
-                contato: contato,
-                titulo: titulo,
-                preco: document.getElementById('v-preco').value,
-                mensagem: document.getElementById('v-msg').value,
-                fotos: fotosBase64
-            };
-
-            await fetch(CONFIG.API_URL, {
-                method: 'POST',
-                mode: 'no-cors',
-                body: JSON.stringify(payload)
-            });
-
-            this.showToast('Proposta enviada! Verificaremos seu e-mail.');
-            this.showHome();
-        } catch (e) {
-            console.error('Erro no envio próprio:', e);
-            this.showToast('Erro no envio. Tente novamente.');
-            btn.innerText = "Enviar Proposta Direta";
-            btn.disabled = false;
-        }
+        window.open(`https://wa.me/${CONFIG.WHATSAPP}?text=${texto}`);
     },
 
     showContact: function() {
