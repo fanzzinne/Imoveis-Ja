@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Imóveis Já | Premium Real Estate</title>
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#121212">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="style.css">
+    <link rel="icon" href="favicon.ico">
+</head>
+<body>
+    <header>
+        <div class="container nav-container">
+            <div class="logo" onclick="app.showHome()">Imóveis Já</div>
+            <div class="nav-links">
+                <button onclick="app.setFilter('type', 'BUY')" class="active">Comprar</button>
+                <button onclick="app.setFilter('type', 'RENT')">Alugar</button>
+                <button onclick="app.showSell()">Vender</button>
+                <button onclick="app.showContact()">Contato</button>
+            </div>
+        </div>
+    </header>
+
+    <main id="app-content">
+        <!-- Conteúdo Principal -->
+    </main>
+
+    <!-- Barra de Navegação Flutuante Estilo App -->
+    <nav class="floating-bar">
+        <button class="float-btn active" onclick="app.showHome()">
+            <i class="fas fa-home"></i>
+            <span>Início</span>
+        </button>
+        <button class="float-btn" onclick="app.showMap()">
+            <i class="fas fa-map-marked-alt"></i>
+            <span>Mapa</span>
+        </button>
+        <button class="float-btn" onclick="app.showFavorites()">
+            <i class="fas fa-heart"></i>
+            <span>Favoritos</span>
+        </button>
+        <button class="float-btn" onclick="app.showContact()">
+            <i class="fas fa-user"></i>
+            <span>Perfil</span>
+        </button>
+    </nav>
+
+    <div id="toast" class="toast">Mensagem de Sucesso!</div>
+
+    <script src="app.js"></script>
+    <script>
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('sw.js');
+        }
+    </script>
+</body>
+</html>

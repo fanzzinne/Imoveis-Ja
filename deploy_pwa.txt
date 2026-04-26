@@ -1,0 +1,21 @@
+Para que o seu PWA (Versão Web) funcione corretamente, siga estes passos:
+
+1. GERAR OS ARQUIVOS:
+Execute este comando no terminal do Android Studio:
+./gradlew :composeApp:wasmJsBrowserDistribution
+
+2. LOCALIZAR OS ARQUIVOS:
+Após o build, os arquivos estarão nesta pasta:
+composeApp/build/dist/wasmJs/productionExecutable/
+
+3. COMO TESTAR LOCALMENTE:
+O PWA NÃO funciona abrindo o index.html diretamente (file://). Você precisa de um servidor web local.
+A forma mais fácil de testar agora é executando:
+./gradlew :composeApp:wasmJsBrowserRun
+
+Isso abrirá automaticamente o seu navegador com o app funcionando.
+
+4. DEPLOY (PUBLICAR):
+Para colocar o site no ar, você deve copiar TODOS os arquivos da pasta 'productionExecutable' (citada no passo 2) para a raiz do seu servidor de hospedagem (como GitHub Pages, Vercel, Firebase Hosting, etc).
+
+Obs: Eu configurei o manifest.json e o Service Worker para que o app seja instalável no celular e computador.
