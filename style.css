@@ -60,6 +60,20 @@ header {
     text-transform: uppercase;
     letter-spacing: 1px;
     cursor: pointer;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+@media (max-width: 480px) {
+    .logo {
+        font-size: 1.1rem; /* Tamanho reduzido para Android/Celulares pequenos */
+        max-width: 180px;
+    }
+    .nav-links button {
+        margin-left: 0.8rem;
+        font-size: 0.8rem;
+    }
 }
 
 .nav-links {

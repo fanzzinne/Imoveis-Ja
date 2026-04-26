@@ -44,22 +44,26 @@ const app = {
     },
 
     setupInstallTrigger: function() {
+        console.log('PWA: Monitorando gatilho de instalação...');
         window.addEventListener('beforeinstallprompt', (e) => {
-            // Impede que o navegador mostre o prompt padrão imediatamente
             e.preventDefault();
             this.deferredPrompt = e;
+            console.log('PWA: Gatilho capturado com sucesso!');
 
-            // Mostra o gatilho de instalação após 5 segundos de navegação
+            // Força a exibição do banner após 3 segundos
             setTimeout(() => {
                 if (this.deferredPrompt) {
                     this.showInstallBanner();
                 }
-            }, 5000);
+            }, 3000);
         });
 
+        // Caso o navegador já tenha o app instalado ou não suporte,
+        // tentamos capturar a mudança de estado
         window.addEventListener('appinstalled', () => {
             this.deferredPrompt = null;
-            console.log('PWA: Instalado com sucesso!');
+            const banner = document.getElementById('install-banner');
+            if (banner) banner.remove();
         });
     },
 
