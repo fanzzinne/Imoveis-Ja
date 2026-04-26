@@ -42,21 +42,32 @@ const app = {
 
     handleInstallPrompt: function() {
         this.deferredPrompt = null;
+        const isAndroid = /Android/i.test(navigator.userAgent);
+        const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone;
+
         window.addEventListener('beforeinstallprompt', (e) => {
             e.preventDefault();
             this.deferredPrompt = e;
 
-            // Verifica se já está instalado ou em modo standalone
-            const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone;
-
-            if (!isStandalone) {
-                document.getElementById('pwa-banner').classList.remove('hidden');
+            if (isAndroid && !isStandalone) {
+                // Versão Android: Mostra o botão no cabeçalho
+                const btn = document.getElementById('btn-install-android');
+                if (btn) btn.classList.remove('hidden');
             }
         });
 
+        // Versão Desktop: Sugere favoritos se não for mobile
+        if (!isAndroid && !isStandalone && !localStorage.getItem('fav_suggested')) {
+            setTimeout(() => {
+                this.showToast('Gostou? Pressione Ctrl+D para salvar nos favoritos! ⭐');
+                localStorage.setItem('fav_suggested', 'true');
+            }, 10000);
+        }
+
         window.addEventListener('appinstalled', () => {
             this.deferredPrompt = null;
-            document.getElementById('pwa-banner').classList.add('hidden');
+            const btn = document.getElementById('btn-install-android');
+            if (btn) btn.classList.add('hidden');
             this.showToast('App instalado com sucesso!');
         });
     },
@@ -67,7 +78,8 @@ const app = {
         const { outcome } = await this.deferredPrompt.userChoice;
         if (outcome === 'accepted') {
             this.deferredPrompt = null;
-            document.getElementById('pwa-banner').classList.add('hidden');
+            const btn = document.getElementById('btn-install-android');
+            if (btn) btn.classList.add('hidden');
         }
     },
 

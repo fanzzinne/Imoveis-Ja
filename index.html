@@ -43,32 +43,21 @@
             <span id="brand-name" class="text-primary font-black text-xl tracking-tighter uppercase">IMÓVEIS JÁ</span>
         </div>
         <!-- Menus Superiores Visíveis no Mobile -->
-        <nav class="flex gap-4 md:gap-8 text-[11px] md:text-sm font-bold tracking-wide uppercase text-zinc-400">
+        <nav class="flex items-center gap-4 md:gap-8 text-[11px] md:text-sm font-bold tracking-wide uppercase text-zinc-400">
             <button onclick="app.setFilter('type', 'BUY')" class="hover:text-white transition-colors">Comprar</button>
             <button onclick="app.setFilter('type', 'RENT')" class="hover:text-white transition-colors">Alugar</button>
             <button onclick="app.showSell()" class="hover:text-white transition-colors">Vender</button>
+            <!-- Botão Instalar Android (Hidden by default) -->
+            <button id="btn-install-android" onclick="app.installPWA()" class="hidden bg-primary text-black px-3 py-1 rounded-lg flex items-center gap-1 animate-pulse">
+                <i class="fas fa-download text-[10px]"></i>
+                <span class="text-[9px]">Instalar</span>
+            </button>
         </nav>
     </header>
 
     <main id="app-content" class="pb-32">
         <!-- Rendered dynamically -->
     </main>
-
-    <!-- PWA Install Banner -->
-    <div id="pwa-banner" class="hidden fixed top-24 left-4 right-4 bg-primary text-black p-4 rounded-2xl shadow-2xl z-[60] flex items-center justify-between border-2 border-white/20">
-        <div class="flex items-center gap-3">
-            <div class="bg-black text-primary p-2 rounded-xl">
-                <i class="fas fa-download"></i>
-            </div>
-            <div>
-                <p class="font-black text-xs uppercase tracking-tighter leading-none">Aplicativo Oficial</p>
-                <p class="text-[10px] font-bold opacity-70">Instale para acesso total</p>
-            </div>
-        </div>
-        <div class="flex gap-2">
-            <button onclick="app.installPWA()" class="bg-black text-white px-5 py-2 rounded-xl text-[10px] font-black uppercase shadow-lg active:scale-95 transition-transform">Instalar Agora</button>
-        </div>
-    </div>
 
     <!-- Bottom Navigation (Fixed) -->
     <nav class="fixed bottom-6 left-1/2 -translate-x-1/2 flex gap-8 px-10 py-4 rounded-full border border-white/10 glass shadow-2xl z-50">
