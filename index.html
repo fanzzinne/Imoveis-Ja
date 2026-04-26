@@ -8,15 +8,15 @@
     <meta name="theme-color" content="#121212">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link rel="stylesheet" href="style.css">
-    <link rel="icon" type="image/png" href="logo.png">
+    <link rel="stylesheet" href="style.css?v=1.1">
+    <link rel="icon" type="image/png" href="./logo.png">
 </head>
 <body>
     <header>
         <div class="container nav-container">
             <div class="logo" onclick="app.showHome()">
                 <span class="logo-text">Imóveis Já</span>
-                <img src="logo.png" class="logo-img" alt="Logo">
+                <img src="./logo.png" class="logo-img" alt="Logo" onerror="this.style.display='none'; document.querySelector('.logo-text').style.display='block';">
             </div>
             <div class="nav-links">
                 <button onclick="app.setFilter('type', 'BUY')" class="active">Comprar</button>
@@ -52,10 +52,15 @@
 
     <div id="toast" class="toast">Mensagem de Sucesso!</div>
 
-    <script src="app.js"></script>
+    <script src="app.js?v=1.1"></script>
     <script>
+        // Limpeza de cache agressiva ao carregar a página
         if ('serviceWorker' in navigator) {
-            navigator.serviceWorker.register('sw.js');
+            navigator.serviceWorker.getRegistrations().then(registrations => {
+                for(let registration of registrations) {
+                    registration.unregister();
+                }
+            });
         }
     </script>
 </body>
