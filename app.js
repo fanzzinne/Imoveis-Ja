@@ -43,12 +43,23 @@ const app = {
     },
 
     setupInstallTrigger: function() {
+        console.log('PWA: Monitorando gatilho de instalação...');
+
+        // Verifica se já está instalado
+        if (window.matchMedia('(display-mode: standalone)').matches) {
+            console.log('PWA: Já está instalado.');
+            return;
+        }
+
         window.addEventListener('beforeinstallprompt', (e) => {
             e.preventDefault();
             this.deferredPrompt = e;
+            console.log('PWA: Evento capturado!');
+
+            // Exibe o banner após interação ou tempo
             setTimeout(() => {
                 if (this.deferredPrompt) this.showInstallBanner();
-            }, 3000);
+            }, 2000);
         });
 
         window.addEventListener('appinstalled', () => {
