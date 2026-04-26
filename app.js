@@ -12,11 +12,16 @@ const app = {
     filters: { type: 'BUY', category: 'Casa', query: '' },
 
     init: async function() {
-        this.registerSW();
-        this.handleInstallPrompt();
-        await this.fetchProperties();
-        this.showHome();
-        this.startCarousel();
+        try {
+            this.registerSW();
+            this.handleInstallPrompt();
+            await this.fetchProperties();
+        } catch (error) {
+            console.error('Erro na inicialização:', error);
+        } finally {
+            this.showHome();
+            this.startCarousel();
+        }
     },
 
     registerSW: function() {
@@ -43,6 +48,7 @@ const app = {
 
     handleInstallPrompt: function() {
         this.deferredPrompt = null;
+        const isAndroid = /Android/i.test(navigator.userAgent);
         const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone;
 
         window.addEventListener('beforeinstallprompt', (e) => {
