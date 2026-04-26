@@ -3,7 +3,7 @@ const CONFIG = {
     SITE_NAME: 'Imóveis Já',
     PRIMARY_COLOR: '#f59e0b',
     WHATSAPP: '5521988137667',
-    LOGO_URL: 'favicon.ico',
+    LOGO_URL: 'logo.png',
     SLOGAN: 'Sua nova história começa aqui',
 
     // 2. INTEGRAÇÃO (Cole sua URL do Apps Script aqui)
@@ -12,6 +12,7 @@ const CONFIG = {
 
 const app = {
     properties: [],
+    favorites: JSON.parse(localStorage.getItem('imoveis_favs') || '[]'),
     carouselIndex: 0,
     filters: { type: 'BUY', category: 'Casa', query: '' },
     deferredPrompt: null,
@@ -28,12 +29,10 @@ const app = {
     registerServiceWorker: function() {
         if ('serviceWorker' in navigator) {
             navigator.serviceWorker.register('sw.js').then(reg => {
-                // Detecta atualização automática
                 reg.onupdatefound = () => {
                     const installingWorker = reg.installing;
                     installingWorker.onstatechange = () => {
                         if (installingWorker.state === 'installed' && navigator.serviceWorker.controller) {
-                            console.log('PWA: Nova versão detectada! Atualizando...');
                             this.showToast('Atualizando para nova versão...');
                             setTimeout(() => window.location.reload(), 2000);
                         }
@@ -44,22 +43,14 @@ const app = {
     },
 
     setupInstallTrigger: function() {
-        console.log('PWA: Monitorando gatilho de instalação...');
         window.addEventListener('beforeinstallprompt', (e) => {
             e.preventDefault();
             this.deferredPrompt = e;
-            console.log('PWA: Gatilho capturado com sucesso!');
-
-            // Força a exibição do banner após 3 segundos
             setTimeout(() => {
-                if (this.deferredPrompt) {
-                    this.showInstallBanner();
-                }
+                if (this.deferredPrompt) this.showInstallBanner();
             }, 3000);
         });
 
-        // Caso o navegador já tenha o app instalado ou não suporte,
-        // tentamos capturar a mudança de estado
         window.addEventListener('appinstalled', () => {
             this.deferredPrompt = null;
             const banner = document.getElementById('install-banner');
@@ -69,7 +60,6 @@ const app = {
 
     showInstallBanner: function() {
         if (document.getElementById('install-banner')) return;
-
         const banner = document.createElement('div');
         banner.id = 'install-banner';
         banner.style = `
@@ -80,21 +70,15 @@ const app = {
             cursor: pointer; animation: fadeIn 0.5s ease-out;
         `;
         banner.innerHTML = `<i class="fas fa-download"></i> INSTALAR APP`;
-
         banner.onclick = () => {
             banner.remove();
             this.deferredPrompt.prompt();
-            this.deferredPrompt.userChoice.then(choice => {
-                if (choice.outcome === 'accepted') console.log('Usuário aceitou a instalação');
-                this.deferredPrompt = null;
-            });
+            this.deferredPrompt = null;
         };
-
         document.body.appendChild(banner);
     },
 
     applyTheme: function() {
-        // A logo agora é gerida via CSS para Android/Desktop
         document.documentElement.style.setProperty('--primary', CONFIG.PRIMARY_COLOR);
     },
 
@@ -106,17 +90,13 @@ const app = {
             const response = await fetch(`${CONFIG.API_URL}?action=informacoes`);
             if (!response.ok) throw new Error(`Status: ${response.status}`);
             const data = await response.json();
-
             if (Array.isArray(data)) {
                 this.properties = data;
             } else {
                 throw new Error('O Google Script não retornou uma lista válida.');
             }
         } catch (error) {
-            console.error('Erro na integração:', error);
-            if (grid) {
-                grid.innerHTML = '<div style="grid-column: 1/-1; text-align: center; padding: 2rem; color: #ff4444;"><p>Falha ao carregar imóveis. Exibindo demonstração...</p></div>';
-            }
+            console.error('Erro na integration:', error);
             this.properties = this.getMockData();
         }
     },
@@ -141,6 +121,23 @@ const app = {
             this.carouselIndex = (this.carouselIndex + 1) % slides.length;
             slides[this.carouselIndex].classList.add('active');
         }, 5000);
+    },
+
+    toggleFavorite: function(e, id) {
+        if(e) e.stopPropagation();
+        const index = this.favorites.indexOf(id);
+        if (index > -1) {
+            this.favorites.splice(index, 1);
+            this.showToast('Removido dos favoritos');
+        } else {
+            this.favorites.push(id);
+            this.showToast('Adicionado aos favoritos');
+        }
+        localStorage.setItem('imoveis_favs', JSON.stringify(this.favorites));
+
+        // Atualiza visualmente o botão se estiver no card ou detalhe
+        const btns = document.querySelectorAll(`.fav-btn-${id}`);
+        btns.forEach(btn => btn.classList.toggle('active'));
     },
 
     showHome: function() {
@@ -180,41 +177,52 @@ const app = {
             </div>
         `;
         this.renderGrid();
+        this.updateActiveBtn(0);
     },
 
-    renderGrid: function() {
+    renderGrid: function(targetProps = null) {
         const grid = document.getElementById('property-grid');
         if (!grid) return;
 
-        const filtered = this.properties.filter(p => {
-            const matchesType = String(p.type).toUpperCase() === String(this.filters.type).toUpperCase();
+        const list = targetProps || this.properties.filter(p => {
+            const type = String(p.type || '').toUpperCase();
+            const filterType = String(this.filters.type || '').toUpperCase();
+            const matchesType = type === filterType;
+
             const pCat = String(p.category || p.propertyType || '').trim().toUpperCase();
-            const fCat = String(this.filters.category).trim().toUpperCase();
+            const fCat = String(this.filters.category || '').trim().toUpperCase();
             const matchesCat = (fCat === 'TODOS' || pCat === fCat);
-            const q = this.filters.query.toLowerCase();
-            const matchesQuery = String(p.title).toLowerCase().includes(q) || String(p.address).toLowerCase().includes(q);
+
+            const q = (this.filters.query || '').toLowerCase();
+            const title = String(p.title || '').toLowerCase();
+            const address = String(p.address || '').toLowerCase();
+            const matchesQuery = title.includes(q) || address.includes(q);
+
             return matchesType && matchesCat && matchesQuery;
         });
 
-        if (filtered.length === 0) {
-            grid.innerHTML = '<div style="grid-column: 1/-1; text-align: center; padding: 3rem;">Nenhum imóvel encontrado nesta categoria.</div>';
+        if (list.length === 0) {
+            grid.innerHTML = `<div style="grid-column: 1/-1; text-align: center; padding: 3rem;">
+                <p>Nenhum imóvel encontrado.</p>
+                <button class="cat-btn" style="margin-top:1rem" onclick="app.setFilter('category', 'Casa')">Ver Casas</button>
+            </div>`;
             return;
         }
 
-        grid.innerHTML = filtered.map(p => `
+        grid.innerHTML = list.map(p => `
             <div class="property-card" onclick="app.showDetail(${p.id})">
-                <div class="card-badge">${p.propertyType || p.category}</div>
-                <img src="${p.images[0]}" class="card-img" alt="${p.title}">
+                <button class="fav-btn-card fav-btn-${p.id} ${this.favorites.includes(p.id) ? 'active' : ''}" onclick="app.toggleFavorite(event, ${p.id})">
+                    <i class="fas fa-heart"></i>
+                </button>
+                <div class="card-badge">${p.propertyType || p.category || 'Imóvel'}</div>
+                <img src="${(p.images && p.images[0]) ? p.images[0] : 'https://images.pexels.com/photos/1571460/pexels-photo-1571460.jpeg'}" class="card-img" alt="${p.title}" onerror="this.src='https://images.pexels.com/photos/1571460/pexels-photo-1571460.jpeg'">
                 <div class="card-content">
-                    <div class="card-price">R$ ${p.price.toLocaleString('pt-BR')}</div>
-                    <div class="card-title">${p.title}</div>
+                    <div class="card-price">R$ ${p.price ? p.price.toLocaleString('pt-BR') : 'Consulte'}</div>
+                    <div class="card-title">${p.title || 'Sem título'}</div>
                     <div class="card-meta">
-                        <span><i class="fas fa-bed"></i> ${p.beds}</span>
-                        <span><i class="fas fa-bath"></i> ${p.baths}</span>
-                        <span><i class="fas fa-expand"></i> ${p.area}m²</span>
-                    </div>
-                    <div class="card-loc" style="margin-top:0.5rem; font-size:0.8rem; color:var(--text-dim)">
-                        <i class="fas fa-map-marker-alt" style="color:var(--primary)"></i> ${p.address}
+                        <span><i class="fas fa-bed"></i> ${p.beds || 0}</span>
+                        <span><i class="fas fa-bath"></i> ${p.baths || 0}</span>
+                        <span><i class="fas fa-expand"></i> ${p.area || 0}m²</span>
                     </div>
                 </div>
             </div>
@@ -228,139 +236,94 @@ const app = {
 
         content.innerHTML = `
             <div class="container detail-view animate">
-                <button class="cat-btn" onclick="app.showHome()" style="margin-bottom:1rem">
-                    <i class="fas fa-arrow-left"></i> Voltar
-                </button>
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem">
+                    <button class="cat-btn" onclick="app.showHome()"><i class="fas fa-arrow-left"></i> Voltar</button>
+                    <button class="cat-btn fav-btn-${p.id} ${this.favorites.includes(p.id) ? 'active' : ''}" onclick="app.toggleFavorite(event, ${p.id})">
+                        <i class="fas fa-heart"></i> Favorito
+                    </button>
+                </div>
 
                 <div class="detail-gallery">
-                    <div class="main-img-container">
-                        <img id="main-photo" src="${p.images[0]}" alt="${p.title}">
-                    </div>
-                    ${p.images.length > 1 ? `
-                    <div class="thumb-grid">
-                        ${p.images.map((img, idx) => `
-                            <div class="thumb-item ${idx === 0 ? 'active' : ''}" onclick="app.changePhoto(this, '${img}')">
-                                <img src="${img}" alt="Miniatura ${idx + 1}">
-                            </div>
-                        `).join('')}
-                    </div>` : ''}
+                    <div class="main-img-container"><img id="main-photo" src="${p.images[0]}"></div>
+                    ${p.images.length > 1 ? `<div class="thumb-grid">${p.images.map((img, idx) => `
+                        <div class="thumb-item ${idx === 0 ? 'active' : ''}" onclick="app.changePhoto(this, '${img}')">
+                            <img src="${img}">
+                        </div>`).join('')}</div>` : ''}
                 </div>
 
                 <div class="detail-header">
                     <h1>${p.title}</h1>
-                    <div style="display:flex; align-items:center; gap:1rem">
-                        <span class="card-price" style="font-size: 2rem">R$ ${p.price.toLocaleString('pt-BR')}</span>
-                        <span style="color:var(--text-dim)">| ${p.address}</span>
-                    </div>
+                    <span class="card-price" style="font-size: 2rem">R$ ${p.price.toLocaleString('pt-BR')}</span>
+                    <p style="color:var(--text-dim)">${p.address}</p>
                 </div>
+
                 <div class="info-grid">
-                    <div class="info-item"><div class="info-label">Tipo</div><div class="info-value">${p.propertyType || p.category}</div></div>
-                    <div class="info-item"><div class="info-label">Área</div><div class="info-value">${p.area} m²</div></div>
-                    <div class="info-item"><div class="info-label">Financiamento</div><div class="info-value">${p.financing}</div></div>
-                    <div class="info-item"><div class="info-label">IPTU Anual</div><div class="info-value">R$ ${p.iptu}</div></div>
+                    <div class="info-item"><label class="info-label">Tipo</label><div class="info-value">${p.propertyType || p.category}</div></div>
+                    <div class="info-item"><label class="info-label">Área</label><div class="info-value">${p.area} m²</div></div>
                 </div>
-                <h3 style="margin-bottom:1rem">Configuração</h3>
-                <div class="features-list">
-                    <div class="feature-tag"><i class="fas fa-bed"></i> ${p.beds} Quartos</div>
-                    <div class="feature-tag"><i class="fas fa-shower"></i> ${p.suites} Suítes</div>
-                    <div class="feature-tag"><i class="fas fa-bath"></i> ${p.baths} Banheiros</div>
-                    <div class="feature-tag"><i class="fas fa-layer-group"></i> ${p.floors} Andar(es)</div>
-                </div>
-                <div class="info-item" style="background:var(--card); margin-top:2rem">
-                    <h3 style="margin-bottom:0.5rem">Lazer & Extras</h3><p>${p.leisure}</p>
-                </div>
+
                 <div style="margin-top:2rem; display:flex; gap:1rem">
-                    <button class="btn-main" style="flex:2" onclick="window.open('https://wa.me/${CONFIG.WHATSAPP}?text=Olá! Tenho interesse no imóvel: ${p.title}')">Tenho Interesse</button>
-                    <button class="btn-main" style="flex:1; background:#333; color:white" onclick="app.openMap('${p.address}')"><i class="fas fa-location-arrow"></i> GPS</button>
+                    <button class="btn-main" style="flex:2" onclick="window.open('https://wa.me/${CONFIG.WHATSAPP}?text=Interesse: ${p.title}')">Tenho Interesse</button>
+                    <button class="btn-main" style="flex:1; background:#333; color:white" onclick="app.openMap('${p.address}')">GPS</button>
                 </div>
             </div>
         `;
     },
 
-    changePhoto: function(element, src) {
+    showFavorites: function() {
+        const content = document.getElementById('app-content');
+        const favProps = this.properties.filter(p => this.favorites.includes(p.id));
+
+        content.innerHTML = `
+            <div class="container animate" style="padding-top:2rem">
+                <h2 style="margin-bottom:2rem">Meus Favoritos</h2>
+                <div class="property-grid" id="property-grid"></div>
+            </div>
+        `;
+        this.renderGrid(favProps);
+        this.updateActiveBtn(2);
+    },
+
+    changePhoto: function(el, src) {
         document.getElementById('main-photo').src = src;
-        document.querySelectorAll('.thumb-item').forEach(el => el.classList.remove('active'));
-        element.classList.add('active');
+        document.querySelectorAll('.thumb-item').forEach(x => x.classList.remove('active'));
+        el.classList.add('active');
     },
 
-    openMap: function(address) {
-        window.open(`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(address)}`);
-    },
-
-    setFilter: function(key, value) {
-        this.filters[key] = value;
-        this.showHome();
-    },
-
-    handleSearch: function(e) {
-        this.filters.query = e.target.value.toLowerCase();
-        this.renderGrid();
-    },
+    openMap: (addr) => window.open(`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(addr)}`),
+    setFilter: function(k, v) { this.filters[k] = v; this.showHome(); },
+    handleSearch: function(e) { this.filters.query = e.target.value.toLowerCase(); this.renderGrid(); },
 
     showAbout: function() {
-        document.getElementById('app-content').innerHTML = `<div class="container animate"><div class="form-card"><h2>Sobre Nós</h2><p>${CONFIG.SITE_NAME} é sua plataforma digital de imóveis.</p></div></div>`;
+        const content = document.getElementById('app-content');
+        content.innerHTML = `<div class="container animate"><div class="form-card" style="text-align:center">
+            <img src="${CONFIG.LOGO_URL}" style="height:80px; margin-bottom:1.5rem">
+            <h2>Sobre a ${CONFIG.SITE_NAME}</h2>
+            <p style="color:var(--text-dim); margin-top:1rem; line-height:1.8">Sua imobiliária digital de confiança.</p>
+            <button class="btn-main" style="background:#333; margin-top:2rem" onclick="app.openMap('Rio de Janeiro')">Localização</button>
+        </div></div>`;
+        this.updateActiveBtn(1);
     },
 
     showSell: function() {
         const content = document.getElementById('app-content');
-        content.innerHTML = `
-            <div class="container animate">
-                <div class="form-card" style="text-align:center">
-                    <h2 style="margin-bottom:1rem">Quer vender seu imóvel?</h2>
-                    <p style="color:var(--text-dim); margin-bottom:2rem">Preencha os campos abaixo para iniciar seu atendimento via WhatsApp.</p>
-
-                    <div style="padding-top:1rem; text-align: left;">
-                        <form id="form-venda-whatsapp">
-                            <div class="form-group">
-                                <label style="font-size: 0.85rem; color: var(--text-dim)">Seu Nome Completo</label>
-                                <input type="text" id="v-nome" placeholder="Digite seu nome..." required>
-                            </div>
-                            <div class="form-group">
-                                <label style="font-size: 0.85rem; color: var(--text-dim)">Seu WhatsApp/Contato</label>
-                                <input type="text" id="v-contato" placeholder="(XX) 99999-9999" required>
-                            </div>
-                            <div class="form-group">
-                                <label style="font-size: 0.85rem; color: var(--text-dim)">Breve descrição do imóvel</label>
-                                <textarea id="v-msg" rows="3" placeholder="Ex: Casa 2 quartos no Bairro X..."></textarea>
-                            </div>
-
-                            <!-- Botão WhatsApp integrado ao formulário -->
-                            <button type="button" onclick="app.abrirWhatsappVenda()" class="btn-main" style="background:#25d366; margin-top:1rem; display:flex; align-items:center; justify-content:center; gap:10px">
-                                <i class="fab fa-whatsapp" style="font-size:1.5rem"></i> Enviar Mensagem
-                            </button>
-                        </form>
-                    </div>
-                </div>
-            </div>
-        `;
-    },
-
-    abrirWhatsappVenda: function() {
-        const nome = document.getElementById('v-nome').value;
-        const contato = document.getElementById('v-contato').value;
-        const mensagem = document.getElementById('v-msg').value;
-
-        if (!nome || !contato) {
-            this.showToast('Por favor, preencha seu nome e contato.');
-            return;
-        }
-
-        const texto = `Olá! Meu nome é ${nome}.%0A` +
-                      `Contato: ${contato}%0A` +
-                      `Gostaria de cadastrar meu imóvel para venda.%0A` +
-                      `Descrição: ${mensagem}`;
-
-        window.open(`https://wa.me/${CONFIG.WHATSAPP}?text=${texto}`);
+        content.innerHTML = `<div class="container animate"><div class="form-card" style="text-align:center">
+            <h2>Vender seu Imóvel</h2>
+            <p style="color:var(--text-dim); margin-bottom:2rem">Atendimento personalizado via WhatsApp.</p>
+            <button class="btn-main" style="background:#25d366" onclick="window.open('https://wa.me/${CONFIG.WHATSAPP}')">Chamar no WhatsApp</button>
+        </div></div>`;
     },
 
     showContact: function() {
         window.open(`https://wa.me/${CONFIG.WHATSAPP}`);
+        this.updateActiveBtn(3);
     },
+
+    updateActiveBtn: (idx) => document.querySelectorAll('.float-btn').forEach((btn, i) => btn.classList.toggle('active', i === idx)),
 
     showToast: function(msg) {
         const toast = document.getElementById('toast');
-        toast.innerText = msg;
-        toast.classList.add('show');
+        toast.innerText = msg; toast.classList.add('show');
         setTimeout(() => toast.classList.remove('show'), 3000);
     }
 };

@@ -16,13 +16,12 @@
         <div class="container nav-container">
             <div class="logo" onclick="app.showHome()">
                 <span class="logo-text">Imóveis Já</span>
-                <img src="favicon.ico" class="logo-img" alt="Logo">
+                <img src="logo.png" class="logo-img" alt="Logo">
             </div>
             <div class="nav-links">
                 <button onclick="app.setFilter('type', 'BUY')" class="active">Comprar</button>
                 <button onclick="app.setFilter('type', 'RENT')">Alugar</button>
                 <button onclick="app.showSell()">Vender</button>
-                <button onclick="app.showContact()">Contato</button>
             </div>
         </div>
     </header>
@@ -37,17 +36,17 @@
             <i class="fas fa-home"></i>
             <span>Início</span>
         </button>
-        <button class="float-btn" onclick="app.showMap()">
-            <i class="fas fa-map-marked-alt"></i>
-            <span>Mapa</span>
+        <button class="float-btn" onclick="app.showAbout()">
+            <i class="fas fa-info-circle"></i>
+            <span>Sobre</span>
         </button>
         <button class="float-btn" onclick="app.showFavorites()">
             <i class="fas fa-heart"></i>
             <span>Favoritos</span>
         </button>
         <button class="float-btn" onclick="app.showContact()">
-            <i class="fas fa-user"></i>
-            <span>Perfil</span>
+            <i class="fas fa-comments"></i>
+            <span>Contato</span>
         </button>
     </nav>
 

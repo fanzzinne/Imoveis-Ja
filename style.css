@@ -264,6 +264,29 @@ header {
     border: 1px solid #333;
 }
 
+.fav-btn-card {
+    position: absolute;
+    top: 1rem;
+    right: 1rem;
+    background: rgba(0, 0, 0, 0.4);
+    backdrop-filter: blur(5px);
+    color: white;
+    border: none;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    z-index: 10;
+    transition: 0.3s;
+}
+
+.fav-btn-card.active {
+    color: #ff4444;
+}
+
 .property-card:hover {
     transform: translateY(-10px);
     border-color: var(--primary);
