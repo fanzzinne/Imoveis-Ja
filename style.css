@@ -53,22 +53,28 @@ header {
     align-items: center;
 }
 
-.logo {
+.logo-img {
+    height: 40px;
+    width: auto;
+    display: none; /* Escondido por padrão */
+    cursor: pointer;
+}
+
+.logo-text {
     font-size: 1.5rem;
     font-weight: 800;
     color: var(--primary);
     text-transform: uppercase;
     letter-spacing: 1px;
     cursor: pointer;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
 }
 
 @media (max-width: 480px) {
-    .logo {
-        font-size: 1.1rem; /* Tamanho reduzido para Android/Celulares pequenos */
-        max-width: 180px;
+    .logo-text {
+        display: none; /* Esconde texto no Android */
+    }
+    .logo-img {
+        display: block; /* Mostra logo imagem no Android */
     }
     .nav-links button {
         margin-left: 0.8rem;

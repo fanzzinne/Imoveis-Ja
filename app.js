@@ -94,8 +94,7 @@ const app = {
     },
 
     applyTheme: function() {
-        const logo = document.querySelector('.logo');
-        if (logo) logo.innerText = CONFIG.SITE_NAME;
+        // A logo agora é gerida via CSS para Android/Desktop
         document.documentElement.style.setProperty('--primary', CONFIG.PRIMARY_COLOR);
     },
 
