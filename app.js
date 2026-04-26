@@ -43,17 +43,19 @@ const app = {
 
     handleInstallPrompt: function() {
         this.deferredPrompt = null;
-        const isAndroid = /Android/i.test(navigator.userAgent);
         const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone;
 
         window.addEventListener('beforeinstallprompt', (e) => {
-            console.log('beforeinstallprompt disparado');
+            console.log('Evento beforeinstallprompt capturado');
             e.preventDefault();
             this.deferredPrompt = e;
 
             if (!isStandalone) {
                 const btn = document.getElementById('btn-install-android');
-                if (btn) btn.classList.remove('hidden');
+                if (btn) {
+                    btn.classList.remove('hidden');
+                    btn.style.display = 'flex';
+                }
             }
         });
 
@@ -74,17 +76,29 @@ const app = {
     },
 
     installPWA: async function() {
+        console.log('Botão de instalação clicado');
         if (!this.deferredPrompt) {
-            this.showToast('O App já está instalado ou não é compatível.');
+            this.showToast('O navegador ainda não autorizou a instalação. Tente recarregar.');
+            console.log('deferredPrompt não está disponível');
             return;
         }
-        this.deferredPrompt.prompt();
-        const { outcome } = await this.deferredPrompt.userChoice;
-        console.log(`Usuário escolheu: ${outcome}`);
-        if (outcome === 'accepted') {
-            this.deferredPrompt = null;
-            const btn = document.getElementById('btn-install-android');
-            if (btn) btn.classList.add('hidden');
+
+        try {
+            this.deferredPrompt.prompt();
+            const { outcome } = await this.deferredPrompt.userChoice;
+            console.log(`Resultado da instalação: ${outcome}`);
+
+            if (outcome === 'accepted') {
+                this.deferredPrompt = null;
+                const btn = document.getElementById('btn-install-android');
+                if (btn) btn.classList.add('hidden');
+                this.showToast('Instalando aplicativo...');
+            } else {
+                console.log('Usuário cancelou a instalação');
+            }
+        } catch (error) {
+            console.error('Erro durante o prompt de instalação:', error);
+            this.showToast('Erro ao abrir instalador.');
         }
     },
 
