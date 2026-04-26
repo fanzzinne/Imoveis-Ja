@@ -118,38 +118,39 @@ const app = {
         const featured = this.properties.filter(p => p.featured);
 
         content.innerHTML = `
-            <!-- Carrossel (Totalmente revisado para remover bordas vazadas) -->
-            <div class="relative w-full max-w-4xl mx-auto h-64 md:h-96 rounded-3xl overflow-hidden mb-8 shadow-2xl bg-black">
-                ${featured.map((p, i) => `
-                <div class="carousel-slide absolute inset-0 opacity-0 transition-opacity duration-1000 ${i === 0 ? 'opacity-100' : ''}"
-                     style="background-image: url('${p.images[0]}'); background-size: cover; background-position: center;"
-                     onclick="app.showDetail(${p.id})">
-                    <!-- Gradiente apenas na parte inferior -->
-                    <div class="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent flex flex-col justify-end p-6">
-                        <h3 class="text-xl font-bold text-white">${p.title}</h3>
-                        <p class="text-primary font-black text-lg">R$ ${p.price.toLocaleString('pt-BR')}</p>
-                    </div>
-                </div>`).join('')}
-            </div>
-
-            <!-- Busca -->
-            <div class="max-w-xl mx-auto mb-10 flex gap-2">
-                <div class="flex-1 bg-darkCard border border-white/10 rounded-2xl flex items-center px-4">
-                    <i class="fas fa-search text-zinc-500"></i>
-                    <input type="text" placeholder="Bairro ou tipo..." class="bg-transparent border-none focus:ring-0 text-white w-full p-4 outline-none" oninput="app.handleSearch(event)">
+            <div class="max-w-7xl mx-auto px-4 md:px-6">
+                <!-- Carrossel -->
+                <div class="relative w-full h-64 md:h-[450px] rounded-[2.5rem] overflow-hidden mb-8 shadow-2xl bg-black">
+                    ${featured.map((p, i) => `
+                    <div class="carousel-slide absolute inset-0 opacity-0 transition-opacity duration-1000 ${i === 0 ? 'opacity-100' : ''}"
+                         style="background-image: url('${p.images[0]}'); background-size: cover; background-position: center;"
+                         onclick="app.showDetail(${p.id})">
+                        <div class="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent flex flex-col justify-end p-6 md:p-12">
+                            <h3 class="text-xl md:text-3xl font-bold text-white">${p.title}</h3>
+                            <p class="text-primary font-black text-lg md:text-2xl">R$ ${p.price.toLocaleString('pt-BR')}</p>
+                        </div>
+                    </div>`).join('')}
                 </div>
-            </div>
 
-            <!-- Categorias -->
-            <div class="flex gap-3 overflow-x-auto pb-4 no-scrollbar justify-center mb-6">
-                ${['Casa','Apartamento','Sitio','Terreno','Galpão','Loja','Kitnet'].map(c => `
-                <button onclick="app.setFilter('category', '${c}')" class="px-6 py-2 rounded-full border ${this.filters.category === c ? 'bg-primary border-primary text-black font-bold' : 'border-white/10 text-zinc-400'} whitespace-nowrap transition-all hover:scale-105">
-                    ${c}
-                </button>`).join('')}
-            </div>
+                <!-- Busca -->
+                <div class="max-w-2xl mx-auto mb-10">
+                    <div class="bg-darkCard border border-white/10 rounded-2xl flex items-center px-4 hover:border-primary/50 transition-colors">
+                        <i class="fas fa-search text-zinc-500"></i>
+                        <input type="text" placeholder="Bairro ou tipo..." class="bg-transparent border-none focus:ring-0 text-white w-full p-4 outline-none" oninput="app.handleSearch(event)">
+                    </div>
+                </div>
 
-            <!-- Grid de Imóveis -->
-            <div id="property-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 animate-in fade-in duration-500"></div>
+                <!-- Categorias -->
+                <div class="flex gap-3 overflow-x-auto pb-6 no-scrollbar md:justify-center mb-4">
+                    ${['Casa','Apartamento','Sitio','Terreno','Galpão','Loja','Kitnet'].map(c => `
+                    <button onclick="app.setFilter('category', '${c}')" class="px-6 py-2.5 rounded-xl border ${this.filters.category === c ? 'bg-primary border-primary text-black font-bold' : 'border-white/10 text-zinc-400'} whitespace-nowrap transition-all active:scale-95 text-sm">
+                        ${c}
+                    </button>`).join('')}
+                </div>
+
+                <!-- Grid de Imóveis -->
+                <div id="property-grid" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6 animate-in fade-in duration-500"></div>
+            </div>
         `;
         this.renderGrid();
     },
@@ -172,21 +173,18 @@ const app = {
         }
 
         grid.innerHTML = filtered.map(p => `
-            <div class="bg-darkCard rounded-[2rem] overflow-hidden border border-white/5 hover:border-primary/30 transition-all hover:-translate-y-2 cursor-pointer relative group" onclick="app.showDetail(${p.id})">
-                <button onclick="app.toggleFavorite(event, ${p.id})" class="absolute top-4 right-4 w-10 h-10 rounded-full bg-black/40 backdrop-blur-md flex items-center justify-center z-10 hover:scale-110 transition-transform">
-                    <i class="fas fa-heart ${this.favorites.includes(p.id) ? 'text-red-500' : 'text-white'}"></i>
+            <div class="bg-darkCard rounded-3xl overflow-hidden border border-white/5 hover:border-primary/30 transition-all active:scale-[0.98] cursor-pointer relative group" onclick="app.showDetail(${p.id})">
+                <button onclick="app.toggleFavorite(event, ${p.id})" class="absolute top-3 right-3 w-8 h-8 rounded-full bg-black/40 backdrop-blur-md flex items-center justify-center z-10">
+                    <i class="fas fa-heart text-sm ${this.favorites.includes(p.id) ? 'text-red-500' : 'text-white'}"></i>
                 </button>
-                <img src="${p.images[0]}" class="w-full h-56 object-cover group-hover:scale-110 transition-transform duration-500" alt="${p.title}">
-                <div class="p-6">
-                    <span class="text-[10px] uppercase tracking-widest text-primary font-bold bg-primary/10 px-3 py-1 rounded-full">${p.propertyType || p.category}</span>
-                    <h3 class="mt-3 text-lg font-bold truncate">${p.title}</h3>
-                    <p class="text-zinc-400 text-xs mt-1"><i class="fas fa-map-marker-alt"></i> ${p.address}</p>
-                    <div class="flex justify-between items-center mt-6">
-                        <span class="text-xl font-black text-primary">R$ ${p.price.toLocaleString('pt-BR')}</span>
-                        <div class="flex gap-4 text-zinc-500 text-xs font-bold">
-                            <span><i class="fas fa-bed"></i> ${p.beds || 0}</span>
-                            <span><i class="fas fa-bath"></i> ${p.baths || 0}</span>
-                        </div>
+                <img src="${p.images[0]}" class="w-full h-36 md:h-48 object-cover" alt="${p.title}">
+                <div class="p-4">
+                    <span class="text-[9px] uppercase tracking-widest text-primary font-bold bg-primary/10 px-2 py-1 rounded-lg">${p.propertyType || p.category}</span>
+                    <h3 class="mt-2 text-sm font-bold truncate">${p.title}</h3>
+                    <p class="text-zinc-500 text-[10px] mt-1 truncate"><i class="fas fa-map-marker-alt text-primary/70"></i> ${p.address}</p>
+                    <div class="flex justify-between items-center mt-4">
+                        <span class="text-base font-black text-primary">R$ ${p.price.toLocaleString('pt-BR')}</span>
+                        <span class="text-[10px] text-zinc-500 font-bold"><i class="fas fa-bed"></i> ${p.beds || 0}</span>
                     </div>
                 </div>
             </div>`).join('');
@@ -262,7 +260,7 @@ const app = {
         content.innerHTML = `
             <div class="max-w-2xl mx-auto text-center space-y-8 py-10 animate-in zoom-in duration-500">
                 <div class="relative w-32 h-32 mx-auto bg-primary/20 rounded-full flex items-center justify-center border-4 border-primary shadow-2xl shadow-primary/30">
-                    <img src="https://api.clau.ai/v1/files/input_file_0.png" class="w-24 h-auto">
+                    <img src="logo.png" class="w-24 h-auto">
                 </div>
                 <div>
                     <h1 class="text-4xl font-black mb-4 uppercase tracking-tighter">${CONFIG.SITE_NAME}</h1>
@@ -315,8 +313,8 @@ const app = {
         const content = document.getElementById('app-content');
         const favs = this.properties.filter(p => this.favorites.includes(p.id));
         content.innerHTML = `
-            <h1 class="text-3xl font-black mb-8">MEUS FAVORITOS</h1>
-            <div id="property-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"></div>
+            <h1 class="text-xl font-black mb-6 uppercase tracking-widest">Meus Favoritos</h1>
+            <div id="property-grid" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4"></div>
         `;
         this.renderGrid(favs);
     },
