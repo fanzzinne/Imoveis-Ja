@@ -42,6 +42,7 @@ const app = {
 
     handleInstallPrompt: function() {
         this.deferredPrompt = null;
+        const isAndroid = /Android/i.test(navigator.userAgent);
         const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone;
 
         window.addEventListener('beforeinstallprompt', (e) => {
@@ -163,10 +164,13 @@ const app = {
         if (!grid) return;
 
         const filtered = list || this.properties.filter(p => {
-            const matchesType = p.type === this.filters.type;
-            const matchesCat = p.propertyType === this.filters.category || p.category === this.filters.category;
-            const q = this.filters.query.toLowerCase();
-            const matchesQuery = p.title.toLowerCase().includes(q) || p.address.toLowerCase().includes(q);
+            const matchesType = !this.filters.type || p.type === this.filters.type;
+            const propertyType = p.propertyType || p.category || '';
+            const matchesCat = !this.filters.category || propertyType === this.filters.category;
+            const q = (this.filters.query || '').toLowerCase();
+            const matchesQuery = !q ||
+                                (p.title && p.title.toLowerCase().includes(q)) ||
+                                (p.address && p.address.toLowerCase().includes(q));
             return matchesType && matchesCat && matchesQuery;
         });
 
