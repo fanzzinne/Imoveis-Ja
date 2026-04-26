@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="pt-BR" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#0f1115">
+    <link rel="manifest" href="manifest.json">
+    <link rel="apple-touch-icon" href="https://cdn-icons-png.flaticon.com/512/609/609803.png">
+    <title>IMÓVEIS JÁ | Premium Real Estate</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#f59e0b',
+                        darkBg: '#0f1115',
+                        darkCard: '#1c1f26',
+                        inputBg: '#2a2d37'
+                    }
+                }
+            }
+        }
+    </script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        body { font-family: 'Inter', sans-serif; background-color: #0f1115; margin: 0; padding: 0; }
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        .glass { background: rgba(255, 255, 255, 0.03); backdrop-filter: blur(10px); border: 1px solid rgba(255, 255, 255, 0.05); }
+        /* Garante que nada vaze para o topo */
+        header { position: sticky; top: 0 !important; z-index: 1000; overflow: hidden; border-top: none !important; }
+        body { margin: 0; padding: 0; border-top: none !important; }
+    </style>
+</head>
+<body class="text-white">
+
+    <!-- Header -->
+    <header class="w-full py-4 px-6 flex justify-between items-center bg-darkBg/90 backdrop-blur-md sticky top-0 z-50 border-b border-white/5">
+        <div class="flex items-center gap-2 cursor-pointer" onclick="app.showHome()">
+            <span id="brand-name" class="text-primary font-black text-xl tracking-tighter uppercase">IMÓVEIS JÁ</span>
+        </div>
+        <!-- Menus Superiores Visíveis no Mobile -->
+        <nav class="flex gap-4 md:gap-8 text-[11px] md:text-sm font-bold tracking-wide uppercase text-zinc-400">
+            <button onclick="app.setFilter('type', 'BUY')" class="hover:text-white transition-colors">Comprar</button>
+            <button onclick="app.setFilter('type', 'RENT')" class="hover:text-white transition-colors">Alugar</button>
+            <button onclick="app.showSell()" class="hover:text-white transition-colors">Vender</button>
+        </nav>
+    </header>
+
+    <main id="app-content" class="pb-32">
+        <!-- Rendered dynamically -->
+    </main>
+
+    <!-- Bottom Navigation (Fixed) -->
+    <nav class="fixed bottom-6 left-1/2 -translate-x-1/2 flex gap-8 px-10 py-4 rounded-full border border-white/10 glass shadow-2xl z-50">
+        <button onclick="app.showHome()" class="flex flex-col items-center gap-1 group">
+            <i class="fas fa-home text-lg text-zinc-500 group-hover:text-primary transition-colors"></i>
+            <span class="text-[9px] uppercase font-black tracking-widest text-zinc-500">Início</span>
+        </button>
+        <button onclick="app.showAbout()" class="flex flex-col items-center gap-1 group">
+            <i class="fas fa-info-circle text-lg text-zinc-500 group-hover:text-primary transition-colors"></i>
+            <span class="text-[9px] uppercase font-black tracking-widest text-zinc-500">Sobre</span>
+        </button>
+        <button onclick="app.showFavorites()" class="flex flex-col items-center gap-1 group">
+            <i class="fas fa-heart text-lg text-zinc-500 group-hover:text-primary transition-colors"></i>
+            <span class="text-[9px] uppercase font-black tracking-widest text-zinc-500">Favs</span>
+        </button>
+        <button onclick="app.showContact()" class="flex flex-col items-center gap-1 group">
+            <i class="fas fa-comments text-lg text-zinc-500 group-hover:text-primary transition-colors"></i>
+            <span class="text-[9px] uppercase font-black tracking-widest text-zinc-500">Zap</span>
+        </button>
+    </nav>
+
+    <!-- Toast Component -->
+    <div id="toast" style="display: none;" class="fixed bottom-10 left-1/2 -translate-x-1/2 bg-primary text-black font-black px-8 py-4 rounded-2xl shadow-2xl z-[100] uppercase text-xs tracking-widest opacity-0 transition-opacity duration-500"></div>
+
+    <script src="app.js"></script>
+</body>
+</html>
