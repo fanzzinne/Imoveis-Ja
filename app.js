@@ -7,7 +7,7 @@ const CONFIG = {
     SLOGAN: 'Sua nova história começa aqui',
 
     // 2. INTEGRAÇÃO (Cole sua URL do Apps Script aqui)
-    API_URL: 'https://script.google.com/macros/s/AKfycbxwHBg4Q2N_RB7Q3TPedUsy-lsmzxD7XYp7pHw5lXixUFkOU_Z1X2QSwugqYVVhcEz8Sg/exec'
+    API_URL: 'https://script.google.com/macros/s/AKfycbz2fap1lcKlO8deqlc4JzTQ0hm1G2tsvWqRZcYB-IdSyODtH0dDZzBw9vmW1i9e-uu5Eg/exec'
 };
 
 const app = {
@@ -23,7 +23,8 @@ const app = {
     },
 
     applyTheme: function() {
-        document.querySelector('.logo').innerText = CONFIG.SITE_NAME;
+        const logo = document.querySelector('.logo');
+        if (logo) logo.innerText = CONFIG.SITE_NAME;
         document.documentElement.style.setProperty('--primary', CONFIG.PRIMARY_COLOR);
     },
 
@@ -31,40 +32,21 @@ const app = {
         const grid = document.getElementById('property-grid');
         if (grid) grid.innerHTML = '<div style="grid-column: 1/-1; text-align: center; padding: 2rem;"><div class="loader"></div><p>Conectando à planilha...</p></div>';
 
-        console.log('Tentando conectar com a URL:', CONFIG.API_URL);
         try {
             const response = await fetch(`${CONFIG.API_URL}?action=informacoes`);
-
-            if (!response.ok) {
-                throw new Error(`Servidor respondeu com status: ${response.status}`);
-            }
-
+            if (!response.ok) throw new Error(`Status: ${response.status}`);
             const data = await response.json();
-            console.log('Dados recebidos da planilha:', data);
 
             if (Array.isArray(data)) {
-                if (data.length === 0) {
-                    console.warn('A planilha retornou uma lista VAZIA.');
-                    this.showToast('Planilha conectada, mas nenhum imóvel encontrado.');
-                }
                 this.properties = data;
             } else {
-                throw new Error('O Google Script não retornou uma lista (Array). Verifique o código .gs');
+                throw new Error('O Google Script não retornou uma lista válida.');
             }
         } catch (error) {
-            console.error('ERRO FATAL NA INTEGRAÇÃO:', error.message);
-
-            // Diagnóstico visual para o usuário
+            console.error('Erro na integração:', error);
             if (grid) {
-                grid.innerHTML = `
-                    <div style="grid-column: 1/-1; text-align: center; padding: 2rem; background: rgba(255,0,0,0.1); border-radius: 16px; border: 1px solid red;">
-                        <h3 style="color: #ff4444;">Falha na Conexão com a Planilha</h3>
-                        <p style="font-size: 0.9rem; margin-top: 10px;">Motivo: ${error.message}</p>
-                        <p style="font-size: 0.8rem; color: var(--text-dim); margin-top: 10px;">Exibindo dados de demonstração offline...</p>
-                    </div>
-                `;
+                grid.innerHTML = '<div style="grid-column: 1/-1; text-align: center; padding: 2rem; color: #ff4444;"><p>Falha ao carregar imóveis. Exibindo demonstração...</p></div>';
             }
-
             this.properties = this.getMockData();
         }
     },
@@ -135,17 +117,12 @@ const app = {
         if (!grid) return;
 
         const filtered = this.properties.filter(p => {
-            // Comparação insensível a maiúsculas para evitar erros de digitação na planilha
             const matchesType = String(p.type).toUpperCase() === String(this.filters.type).toUpperCase();
-
             const pCat = String(p.category || p.propertyType || '').trim().toUpperCase();
             const fCat = String(this.filters.category).trim().toUpperCase();
             const matchesCat = (fCat === 'TODOS' || pCat === fCat);
-
             const q = this.filters.query.toLowerCase();
-            const matchesQuery = String(p.title).toLowerCase().includes(q) ||
-                               String(p.address).toLowerCase().includes(q);
-
+            const matchesQuery = String(p.title).toLowerCase().includes(q) || String(p.address).toLowerCase().includes(q);
             return matchesType && matchesCat && matchesQuery;
         });
 
@@ -184,7 +161,21 @@ const app = {
                 <button class="cat-btn" onclick="app.showHome()" style="margin-bottom:1rem">
                     <i class="fas fa-arrow-left"></i> Voltar
                 </button>
-                <div class="detail-gallery"><img src="${p.images[0]}" alt="${p.title}"></div>
+
+                <div class="detail-gallery">
+                    <div class="main-img-container">
+                        <img id="main-photo" src="${p.images[0]}" alt="${p.title}">
+                    </div>
+                    ${p.images.length > 1 ? `
+                    <div class="thumb-grid">
+                        ${p.images.map((img, idx) => `
+                            <div class="thumb-item ${idx === 0 ? 'active' : ''}" onclick="app.changePhoto(this, '${img}')">
+                                <img src="${img}" alt="Miniatura ${idx + 1}">
+                            </div>
+                        `).join('')}
+                    </div>` : ''}
+                </div>
+
                 <div class="detail-header">
                     <h1>${p.title}</h1>
                     <div style="display:flex; align-items:center; gap:1rem">
@@ -216,6 +207,12 @@ const app = {
         `;
     },
 
+    changePhoto: function(element, src) {
+        document.getElementById('main-photo').src = src;
+        document.querySelectorAll('.thumb-item').forEach(el => el.classList.remove('active'));
+        element.classList.add('active');
+    },
+
     openMap: function(address) {
         window.open(`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(address)}`);
     },
@@ -235,7 +232,100 @@ const app = {
     },
 
     showSell: function() {
-        document.getElementById('app-content').innerHTML = `<div class="container animate"><div class="form-card"><h2>Vender Imóvel</h2><p>Contate-nos via WhatsApp para cadastrar seu imóvel.</p></div></div>`;
+        const content = document.getElementById('app-content');
+        content.innerHTML = `
+            <div class="container animate">
+                <div class="form-card">
+                    <h2 style="margin-bottom:1.5rem">Cadastre seu Imóvel para Venda</h2>
+                    <p style="color:var(--text-dim); margin-bottom:2rem">Preencha os detalhes e anexe fotos. Nossa equipe entrará em contato via e-mail.</p>
+
+                    <form id="form-venda-proprio">
+                        <div class="form-group">
+                            <label>Seu Nome Completo</label>
+                            <input type="text" id="v-nome" required placeholder="Como podemos te chamar?">
+                        </div>
+                        <div class="form-group">
+                            <label>WhatsApp / Telefone</label>
+                            <input type="text" id="v-contato" required placeholder="(XX) 99999-9999">
+                        </div>
+                        <div class="form-group">
+                            <label>Título do Imóvel</label>
+                            <input type="text" id="v-titulo" required placeholder="Ex: Casa 3 qts no Centro">
+                        </div>
+                        <div class="form-group">
+                            <label>Preço Sugerido (R$)</label>
+                            <input type="number" id="v-preco" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Descrição e Detalhes</label>
+                            <textarea id="v-msg" rows="4" placeholder="Fale um pouco sobre o imóvel..."></textarea>
+                        </div>
+                        <div class="form-group">
+                            <label>Anexar Fotos (Máx 4 fotos)</label>
+                            <input type="file" id="v-fotos" multiple accept="image/*" style="padding: 0.5rem; background: var(--card)">
+                        </div>
+
+                        <button type="button" onclick="app.enviarVendaPropria()" class="btn-main" id="btn-enviar-venda">Enviar Proposta Direta</button>
+                    </form>
+                </div>
+            </div>
+        `;
+    },
+
+    enviarVendaPropria: async function() {
+        const btn = document.getElementById('btn-enviar-venda');
+        const fotosInput = document.getElementById('v-fotos');
+        const nome = document.getElementById('v-nome').value;
+        const contato = document.getElementById('v-contato').value;
+        const titulo = document.getElementById('v-titulo').value;
+
+        if (!nome || !contato || !titulo) {
+            this.showToast('Por favor, preencha os campos obrigatórios.');
+            return;
+        }
+
+        btn.innerText = "Processando fotos e enviando...";
+        btn.disabled = true;
+
+        const toBase64 = file => new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.readAsDataURL(file);
+            reader.onload = () => resolve({data: reader.result, type: file.type, name: file.name});
+            reader.onerror = error => reject(error);
+        });
+
+        try {
+            const fotosBase64 = [];
+            for (let file of fotosInput.files) {
+                if (fotosBase64.length < 4) {
+                    fotosBase64.push(await toBase64(file));
+                }
+            }
+
+            const payload = {
+                action: 'venda',
+                nome: nome,
+                contato: contato,
+                titulo: titulo,
+                preco: document.getElementById('v-preco').value,
+                mensagem: document.getElementById('v-msg').value,
+                fotos: fotosBase64
+            };
+
+            await fetch(CONFIG.API_URL, {
+                method: 'POST',
+                mode: 'no-cors',
+                body: JSON.stringify(payload)
+            });
+
+            this.showToast('Proposta enviada! Verificaremos seu e-mail.');
+            this.showHome();
+        } catch (e) {
+            console.error('Erro no envio próprio:', e);
+            this.showToast('Erro no envio. Tente novamente.');
+            btn.innerText = "Enviar Proposta Direta";
+            btn.disabled = false;
+        }
     },
 
     showContact: function() {
