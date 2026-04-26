@@ -1,67 +1,83 @@
 <!DOCTYPE html>
-<html lang="pt-BR">
+<html lang="pt-BR" class="dark">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Imóveis Já | Premium Real Estate</title>
-    <link rel="manifest" href="manifest.json">
-    <meta name="theme-color" content="#121212">
+    <!-- Tailwind CSS via CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#f59e0b',
+                        darkBg: '#121212',
+                        darkSurface: '#1e1e1e',
+                        darkCard: '#2a2a2a'
+                    }
+                }
+            }
+        }
+    </script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link rel="stylesheet" href="style.css?v=1.1">
-    <link rel="icon" type="image/png" href="./logo.png">
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        .glass { background: rgba(255, 255, 255, 0.05); backdrop-filter: blur(15px); border: 1px solid rgba(255, 255, 255, 0.1); }
+        .glass-dark { background: rgba(18, 18, 18, 0.8); backdrop-filter: blur(10px); }
+    </style>
 </head>
-<body>
-    <header>
-        <div class="container nav-container">
-            <div class="logo" onclick="app.showHome()">
-                <span class="logo-text">Imóveis Já</span>
-                <img src="./logo.png" class="logo-img" alt="Logo" onerror="this.style.display='none'; document.querySelector('.logo-text').style.display='block';">
+<body class="bg-darkBg text-white min-h-screen pb-24">
+
+    <!-- Header -->
+    <header class="sticky top-0 z-50 glass-dark border-b border-white/10">
+        <div class="max-w-6xl mx-auto px-4 h-16 flex items-center justify-between">
+            <div class="flex items-center gap-2 cursor-pointer" onclick="app.showHome()">
+                <img src="logo.png" id="main-logo" class="h-10 w-auto" alt="Logo" onerror="this.classList.add('hidden'); document.getElementById('logo-text').classList.remove('hidden')">
+                <span id="logo-text" class="text-primary font-extrabold text-xl tracking-tighter hidden md:block uppercase">Imóveis Já</span>
             </div>
-            <div class="nav-links">
-                <button onclick="app.setFilter('type', 'BUY')" class="active">Comprar</button>
-                <button onclick="app.setFilter('type', 'RENT')">Alugar</button>
-                <button onclick="app.showSell()">Vender</button>
-            </div>
+            <nav class="flex gap-4">
+                <button onclick="app.setFilter('type', 'BUY')" class="text-sm font-semibold hover:text-primary transition-colors">Comprar</button>
+                <button onclick="app.setFilter('type', 'RENT')" class="text-sm font-semibold hover:text-primary transition-colors">Alugar</button>
+                <button onclick="app.showSell()" class="text-sm font-semibold hover:text-primary transition-colors">Vender</button>
+            </nav>
         </div>
     </header>
 
-    <main id="app-content">
-        <!-- Conteúdo Principal -->
+    <!-- Main Content -->
+    <main id="app-content" class="max-w-6xl mx-auto px-4 py-6">
+        <!-- Renderizado via JS -->
+        <div class="flex flex-col items-center justify-center h-64">
+            <div class="animate-spin rounded-full h-12 w-12 border-t-2 border-primary"></div>
+            <p class="mt-4 text-zinc-400">Conectando ao catálogo...</p>
+        </div>
     </main>
 
-    <!-- Barra de Navegação Flutuante Estilo App -->
-    <nav class="floating-bar">
-        <button class="float-btn active" onclick="app.showHome()">
-            <i class="fas fa-home"></i>
-            <span>Início</span>
+    <!-- Navigation Bar Mobile -->
+    <nav class="fixed bottom-6 left-1/2 -translate-x-1/2 glass rounded-full px-8 py-3 flex gap-10 shadow-2xl z-50 border border-white/20">
+        <button onclick="app.showHome()" class="flex flex-col items-center gap-1 group">
+            <i class="fas fa-home text-lg group-[.active]:text-primary transition-colors"></i>
+            <span class="text-[10px] uppercase font-bold tracking-widest">Início</span>
         </button>
-        <button class="float-btn" onclick="app.showAbout()">
-            <i class="fas fa-info-circle"></i>
-            <span>Sobre</span>
+        <button onclick="app.showAbout()" class="flex flex-col items-center gap-1 group">
+            <i class="fas fa-info-circle text-lg group-[.active]:text-primary transition-colors"></i>
+            <span class="text-[10px] uppercase font-bold tracking-widest">Sobre</span>
         </button>
-        <button class="float-btn" onclick="app.showFavorites()">
-            <i class="fas fa-heart"></i>
-            <span>Favoritos</span>
+        <button onclick="app.showFavorites()" class="flex flex-col items-center gap-1 group">
+            <i class="fas fa-heart text-lg group-[.active]:text-primary transition-colors"></i>
+            <span class="text-[10px] uppercase font-bold tracking-widest">Favs</span>
         </button>
-        <button class="float-btn" onclick="app.showContact()">
-            <i class="fas fa-comments"></i>
-            <span>Contato</span>
+        <button onclick="app.showContact()" class="flex flex-col items-center gap-1 group">
+            <i class="fas fa-comments text-lg group-[.active]:text-primary transition-colors"></i>
+            <span class="text-[10px] uppercase font-bold tracking-widest">Zap</span>
         </button>
     </nav>
 
-    <div id="toast" class="toast">Mensagem de Sucesso!</div>
+    <!-- Toast -->
+    <div id="toast" class="fixed top-20 right-4 bg-primary text-black font-bold px-6 py-3 rounded-xl shadow-lg translate-x-[200%] transition-transform duration-500 z-[100]"></div>
 
-    <script src="app.js?v=1.1"></script>
-    <script>
-        // Limpeza de cache agressiva ao carregar a página
-        if ('serviceWorker' in navigator) {
-            navigator.serviceWorker.getRegistrations().then(registrations => {
-                for(let registration of registrations) {
-                    registration.unregister();
-                }
-            });
-        }
-    </script>
+    <script src="app.js?v=2.0"></script>
 </body>
 </html>
