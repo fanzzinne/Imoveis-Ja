@@ -251,7 +251,7 @@ const app = {
                 <div class="bg-darkCard p-8 rounded-[2.5rem] border border-white/5 space-y-6">
                     <div>
                         <h3 class="text-xl font-bold mb-4">Caracteristicas do Imóvel</h3>
-                        <p class="text-zinc-400 leading-relaxed">${p.leisure || 'Não informado.'}</p>
+                        <p class="text-zinc-400 leading-relaxed">${p.leisure ? p.leisure.replace(/,/g, ' • ') : 'Não informado.'}</p>
                     </div>
 
                     <div class="grid grid-cols-2 md:grid-cols-4 gap-6 pt-6 border-t border-white/5">
