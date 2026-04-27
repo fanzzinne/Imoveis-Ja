@@ -61,8 +61,14 @@ const app = {
 
             if (Array.isArray(data)) {
                 this.properties = data.map((p, index) => {
+                    // Função auxiliar para achar valores em colunas com nomes variados
+                    const findVal = (p, terms) => {
+                        const key = Object.keys(p).find(k => terms.some(t => k.toLowerCase().includes(t.toLowerCase())));
+                        return key ? p[key] : null;
+                    };
+
                     // Tenta encontrar as imagens em várias colunas possíveis
-                    let rawImages = p["Imagens"] || p["Imagens "] || p["Link"] || p["Fotos"] || "";
+                    let rawImages = findVal(p, ["Imagens", "Link", "Fotos"]) || "";
 
                     // Se não achou pelo nome, tenta procurar um valor que comece com http (comum em planilhas)
                     if (!rawImages) {
@@ -86,24 +92,28 @@ const app = {
                     // Se ainda estiver vazio, usa o logo
                     if (imageList.length === 0) imageList = ['logo.png'];
 
+                    // Extrai apenas os números da área para evitar "0 m²" ou "108m² m²"
+                    const rawArea = findVal(p, ["Área", "Area"]) || "0";
+                    const areaValue = rawArea.toString().replace(/[^\d]/g, '') || "0";
+
                     return {
                         id: index + 1,
-                        title: p["Título"] || p["Titulo"] || "Sem título",
-                        category: p["Categoria"] || "Outros",
-                        type: p["Finalidade"] || "COMPRAR",
-                        featured: p["Destaque?"] === "SIM" || p["Destaque?"] === true || p["Destaque?"] === "Sim",
-                        price: parseFloat(p["Valor R$"].toString().replace(/[^\d]/g, '')) || 0,
-                        iptu: p["IPTU"] || 0,
-                        financing: p["Financiamento?"] || "Consulte",
-                        area: p["Área m²"] || p["Area m2"] || 0,
-                        beds: p["Quartos"] || 0,
-                        suites: p["Suítes"] || p["Suites"] || 0,
-                        baths: p["Banheiros"] || 0,
-                        kitchens: p["Cozinha"] || 0,
-                        floors: p["Andares"] || 1,
-                        leisure: p["Lazer"] || "",
-                        address: p["Endereço"] || p["Endereco"] || "",
-                        docs: p["Documentação"] || "",
+                        title: findVal(p, ["Título", "Titulo"]) || "Sem título",
+                        category: findVal(p, ["Categoria"]) || "Outros",
+                        type: findVal(p, ["Finalidade"]) || "COMPRAR",
+                        featured: ["SIM", "Sim", "true", true].includes(findVal(p, ["Destaque"])),
+                        price: p["Valor R$"] ? parseFloat(p["Valor R$"].toString().replace(/[^\d,]/g, '').replace(',', '.')) : 0,
+                        iptu: findVal(p, ["IPTU"]) || 0,
+                        financing: findVal(p, ["Financiamento"]) || "Consulte",
+                        area: areaValue,
+                        beds: findVal(p, ["Quartos"]) || 0,
+                        suites: findVal(p, ["Suítes", "Suites"]) || 0,
+                        baths: findVal(p, ["Banheiros"]) || 0,
+                        kitchens: findVal(p, ["Cozinha"]) || 0,
+                        floors: findVal(p, ["Andares"]) || 1,
+                        leisure: findVal(p, ["Lazer"]) || "",
+                        address: findVal(p, ["Endereço", "Endereco"]) || "",
+                        docs: findVal(p, ["Documentação", "Documentacao"]) || "",
                         images: imageList
                     };
                 });
@@ -198,24 +208,97 @@ const app = {
 
         content.innerHTML = `
             <div class="max-w-4xl mx-auto space-y-6">
-                <button onclick="app.showHome()" class="flex items-center gap-2 text-zinc-400">
+                <button onclick="app.showHome()" class="flex items-center gap-2 text-zinc-400 hover:text-white transition-colors">
                     <i class="fas fa-arrow-left"></i> Voltar
                 </button>
-                <img id="main-photo" src="${p.images[0]}" class="w-full h-[300px] md:h-[500px] object-cover rounded-[2.5rem]">
-                <div class="grid grid-cols-4 gap-3">
-                    ${p.images.map(img => `<img src="${img}" class="h-20 w-full object-cover rounded-2xl cursor-pointer" onclick="document.getElementById('main-photo').src='${img}'">`).join('')}
+
+                <div class="rounded-[2.5rem] overflow-hidden shadow-2xl">
+                    <img id="main-photo" src="${p.images[0]}" class="w-full h-[300px] md:h-[500px] object-cover">
                 </div>
-                <h1 class="text-3xl font-black">${p.title}</h1>
-                <p class="text-primary text-4xl font-black">R$ ${p.price.toLocaleString('pt-BR')}</p>
-                <div class="bg-darkCard p-8 rounded-[2.5rem] border border-white/5">
-                    <h3 class="text-xl font-bold mb-4">Detalhes</h3>
-                    <p class="text-zinc-400">${p.leisure}</p>
-                    <div class="grid grid-cols-2 gap-4 mt-6">
-                        <div class="bg-white/5 p-4 rounded-2xl">Área: ${p.area}m²</div>
-                        <div class="bg-white/5 p-4 rounded-2xl">Quartos: ${p.beds}</div>
+
+                <div class="grid grid-cols-4 md:grid-cols-6 gap-3">
+                    ${p.images.map(img => `<img src="${img}" class="h-20 w-full object-cover rounded-2xl cursor-pointer hover:opacity-80 transition-opacity" onclick="document.getElementById('main-photo').src='${img}'">`).join('')}
+                </div>
+
+                <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                    <div>
+                        <h1 class="text-3xl font-black">${p.title}</h1>
+                        <div class="flex flex-wrap items-center gap-3 mt-1">
+                            <p class="text-zinc-400"><i class="fas fa-map-marker-alt text-primary"></i> ${p.address}</p>
+                            <button onclick="window.open('https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(p.address)}')" class="text-[10px] bg-primary/10 text-primary border border-primary/20 px-3 py-1 rounded-full font-bold hover:bg-primary hover:text-black transition-all">
+                                <i class="fas fa-external-link-alt mr-1"></i> VER NO MAPA
+                            </button>
+                        </div>
+                    </div>
+                    <span class="text-4xl font-black text-primary whitespace-nowrap">R$ ${p.price.toLocaleString('pt-BR')}</span>
+                </div>
+
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                    <div class="bg-darkCard p-6 rounded-3xl border border-white/5">
+                        <p class="text-zinc-500 text-xs font-bold uppercase tracking-widest">Área</p>
+                        <p class="text-xl font-bold mt-1">${p.area} m²</p>
+                    </div>
+                    <div class="bg-darkCard p-6 rounded-3xl border border-white/5">
+                        <p class="text-zinc-500 text-xs font-bold uppercase tracking-widest">IPTU</p>
+                        <p class="text-xl font-bold mt-1">R$ ${p.iptu}</p>
+                    </div>
+                    <div class="bg-darkCard p-6 rounded-3xl border border-white/5 col-span-2">
+                        <p class="text-zinc-500 text-xs font-bold uppercase tracking-widest">Financiamento</p>
+                        <p class="text-xl font-bold mt-1">${p.financing}</p>
                     </div>
                 </div>
-                <button class="w-full bg-primary text-black font-black py-5 rounded-3xl" onclick="window.open('https://wa.me/${CONFIG.WHATSAPP}?text=Interesse: ${p.title}')">
+
+                <div class="bg-darkCard p-8 rounded-[2.5rem] border border-white/5 space-y-6">
+                    <div>
+                        <h3 class="text-xl font-bold mb-4">Caracteristicas do Imóvel</h3>
+                        <p class="text-zinc-400 leading-relaxed">${p.leisure || 'Não informado.'}</p>
+                    </div>
+
+                    <div class="grid grid-cols-2 md:grid-cols-4 gap-6 pt-6 border-t border-white/5">
+                        <div class="flex items-center gap-3">
+                            <i class="fas fa-bed text-primary text-xl"></i>
+                            <div>
+                                <p class="text-[10px] text-zinc-500 uppercase font-bold">Quartos</p>
+                                <p class="font-bold">${p.beds}</p>
+                            </div>
+                        </div>
+                        <div class="flex items-center gap-3">
+                            <i class="fas fa-bath text-primary text-xl"></i>
+                            <div>
+                                <p class="text-[10px] text-zinc-500 uppercase font-bold">Banheiros</p>
+                                <p class="font-bold">${p.baths}</p>
+                            </div>
+                        </div>
+                        <div class="flex items-center gap-3">
+                            <i class="fas fa-shower text-primary text-xl"></i>
+                            <div>
+                                <p class="text-[10px] text-zinc-500 uppercase font-bold">Suítes</p>
+                                <p class="font-bold">${p.suites}</p>
+                            </div>
+                        </div>
+                        <div class="flex items-center gap-3">
+                            <i class="fas fa-utensils text-primary text-xl"></i>
+                            <div>
+                                <p class="text-[10px] text-zinc-500 uppercase font-bold">Cozinhas</p>
+                                <p class="font-bold">${p.kitchens}</p>
+                            </div>
+                        </div>
+                        <div class="flex items-center gap-3">
+                            <i class="fas fa-layer-group text-primary text-xl"></i>
+                            <div>
+                                <p class="text-[10px] text-zinc-500 uppercase font-bold">Andares</p>
+                                <p class="font-bold">${p.floors}</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="pt-6 border-t border-white/5">
+                        <h3 class="text-lg font-bold mb-2">Documentação</h3>
+                        <p class="text-zinc-400">${p.docs || 'Consulte o corretor.'}</p>
+                    </div>
+                </div>
+
+                <button class="w-full bg-primary text-black font-black py-5 rounded-3xl hover:brightness-110 transition-all shadow-lg shadow-primary/20" onclick="window.open('https://wa.me/${CONFIG.WHATSAPP}?text=Interesse: ${p.title}')">
                     TENHO INTERESSE
                 </button>
             </div>
