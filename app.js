@@ -189,6 +189,9 @@ const app = {
 
         grid.innerHTML = filtered.map(p => `
             <div class="bg-darkCard rounded-3xl overflow-hidden border border-white/5 hover:border-primary/30 transition-all cursor-pointer relative" onclick="app.showDetail(${p.id})">
+                <button onclick="app.toggleFavorite(event, ${p.id})" class="absolute top-3 right-3 w-8 h-8 rounded-full bg-black/40 backdrop-blur-md flex items-center justify-center z-10 hover:scale-110 transition-transform">
+                    <i class="fas fa-heart ${this.favorites.includes(p.id) ? 'text-red-500' : 'text-white'}"></i>
+                </button>
                 <img src="${p.images[0]}" class="w-full h-36 md:h-48 object-cover">
                 <div class="p-4">
                     <span class="text-[9px] uppercase tracking-widest text-primary font-bold bg-primary/10 px-2 py-1 rounded-lg">${p.category}</span>
@@ -221,7 +224,7 @@ const app = {
                 </div>
 
                 <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                    <div>
+                    <div class="flex-1">
                         <h1 class="text-3xl font-black">${p.title}</h1>
                         <div class="flex flex-wrap items-center gap-3 mt-1">
                             <p class="text-zinc-400"><i class="fas fa-map-marker-alt text-primary"></i> ${p.address}</p>
@@ -230,7 +233,12 @@ const app = {
                             </button>
                         </div>
                     </div>
-                    <span class="text-4xl font-black text-primary whitespace-nowrap">R$ ${p.price.toLocaleString('pt-BR')}</span>
+                    <div class="flex items-center gap-4">
+                        <button onclick="app.toggleFavorite(event, ${p.id})" class="w-12 h-12 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center hover:bg-white/10 transition-colors">
+                            <i class="fas fa-heart text-xl ${this.favorites.includes(p.id) ? 'text-red-500' : 'text-zinc-400'}"></i>
+                        </button>
+                        <span class="text-4xl font-black text-primary whitespace-nowrap">R$ ${p.price.toLocaleString('pt-BR')}</span>
+                    </div>
                 </div>
 
                 <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
@@ -304,6 +312,99 @@ const app = {
             </div>
         `;
     },
+
+    showFavorites: function() {
+        const content = document.getElementById('app-content');
+        const favs = this.properties.filter(p => this.favorites.includes(p.id));
+        content.innerHTML = `
+            <div class="max-w-7xl mx-auto px-4 md:px-6">
+                <h1 class="text-3xl font-black mb-8 uppercase tracking-tighter">Meus Favoritos</h1>
+                <div id="property-grid" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6"></div>
+            </div>
+        `;
+        this.renderGrid(favs);
+    },
+
+    toggleFavorite: function(e, id) {
+        e.stopPropagation();
+        const index = this.favorites.indexOf(id);
+        if (index > -1) {
+            this.favorites.splice(index, 1);
+            this.showToast('Removido dos favoritos');
+        } else {
+            this.favorites.push(id);
+            this.showToast('Adicionado aos favoritos');
+        }
+        localStorage.setItem('imoveis_favs', JSON.stringify(this.favorites));
+
+        // Se estiver na tela de favoritos, re-renderiza para remover o card
+        const isFavPage = document.querySelector('h1')?.innerText === 'MEUS FAVORITOS';
+        if (isFavPage) {
+            this.showFavorites();
+        } else {
+            this.renderGrid();
+            // Se estiver na tela de detalhes, atualiza o ícone do coração
+            const heartIcon = e.currentTarget.querySelector('i');
+            if (heartIcon) {
+                heartIcon.className = `fas fa-heart ${this.favorites.includes(id) ? 'text-red-500' : 'text-zinc-400'}`;
+            }
+        }
+    },
+
+    showAbout: function() {
+        const content = document.getElementById('app-content');
+        content.innerHTML = `
+            <div class="max-w-2xl mx-auto text-center space-y-8 py-10">
+                <div class="relative w-32 h-32 mx-auto bg-primary/20 rounded-full flex items-center justify-center border-4 border-primary shadow-2xl shadow-primary/30">
+                    <img src="logo.png" class="w-24 h-auto">
+                </div>
+                <div>
+                    <h1 class="text-4xl font-black mb-4 uppercase tracking-tighter">${CONFIG.SITE_NAME}</h1>
+                    <p class="text-zinc-400 text-lg leading-relaxed font-medium">Sua parceira ideal na busca pelo lar dos seus sonhos. Atuamos com transparência, agilidade e foco total em resultados exclusivos.</p>
+                </div>
+            </div>
+        `;
+    },
+
+    showSell: function() {
+        const content = document.getElementById('app-content');
+        content.innerHTML = `
+            <div class="max-w-2xl mx-auto py-10 px-4">
+                <div class="text-center mb-10">
+                    <h1 class="text-4xl font-black mb-2">QUER VENDER?</h1>
+                    <p class="text-zinc-500 font-medium">Preencha os campos para atendimento prioritário via WhatsApp.</p>
+                </div>
+                <div class="bg-darkCard p-10 rounded-[3rem] border border-white/5 space-y-6 shadow-2xl">
+                    <div>
+                        <label class="text-xs font-bold text-zinc-500 uppercase tracking-widest ml-2">Seu Nome</label>
+                        <input type="text" id="v-nome" class="w-full bg-white/5 border border-white/10 rounded-2xl p-4 mt-2 focus:border-primary outline-none transition-all">
+                    </div>
+                    <div>
+                        <label class="text-xs font-bold text-zinc-500 uppercase tracking-widest ml-2">WhatsApp</label>
+                        <input type="text" id="v-contato" class="w-full bg-white/5 border border-white/10 rounded-2xl p-4 mt-2 focus:border-primary outline-none transition-all" placeholder="(XX) 99999-9999">
+                    </div>
+                    <div>
+                        <label class="text-xs font-bold text-zinc-500 uppercase tracking-widest ml-2">Sobre o Imóvel</label>
+                        <textarea id="v-msg" rows="4" class="w-full bg-white/5 border border-white/10 rounded-2xl p-4 mt-2 focus:border-primary outline-none transition-all" placeholder="Bairro, quartos, valor..."></textarea>
+                    </div>
+                    <button onclick="app.abrirWhatsappVenda()" class="w-full bg-primary text-black font-black py-5 rounded-2xl hover:brightness-110 active:scale-95 transition-all shadow-xl shadow-primary/20">
+                        ENVIAR VIA WHATSAPP
+                    </button>
+                </div>
+            </div>
+        `;
+    },
+
+    abrirWhatsappVenda: function() {
+        const n = document.getElementById('v-nome').value;
+        const c = document.getElementById('v-contato').value;
+        const m = document.getElementById('v-msg').value;
+        if(!n || !c) return this.showToast('Preencha os campos!');
+        const text = `Olá! Meu nome é ${n}.%0AContato: ${c}%0AGostaria de vender meu imóvel.%0ADetalhes: ${m}`;
+        window.open(`https://wa.me/${CONFIG.WHATSAPP}?text=${text}`);
+    },
+
+    showContact: () => window.open(`https://wa.me/${CONFIG.WHATSAPP}`),
 
     setFilter: function(k, v) { this.filters[k] = v; this.showHome(); },
     handleSearch: function(e) { this.filters.query = e.target.value; this.renderGrid(); },
