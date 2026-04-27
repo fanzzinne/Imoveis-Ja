@@ -155,7 +155,7 @@ const app = {
 
                 <!-- Categorias -->
                 <div class="flex gap-3 overflow-x-auto pb-6 no-scrollbar md:justify-center mb-4">
-                    ${['Casa','Apartamento','Kitnet','Terreno'].map(c => `
+                    ${['Casa','Apartamento','Kitnet','Terreno','Galpão','Loja','Sítio'].map(c => `
                     <button onclick="app.setFilter('category', '${c}')" class="px-6 py-2.5 rounded-xl border ${this.filters.category === c ? 'bg-primary border-primary text-black font-bold' : 'border-white/10 text-zinc-400'} whitespace-nowrap transition-all text-sm">
                         ${c}
                     </button>`).join('')}
