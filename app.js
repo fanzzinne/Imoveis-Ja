@@ -2,7 +2,8 @@ const CONFIG = {
     SITE_NAME: 'IMÓVEIS JÁ',
     PRIMARY_COLOR: '#f59e0b',
     WHATSAPP: '5521988137667',
-    API_URL: 'https://script.google.com/macros/s/AKfycbwUCZbHHe9ku_aKkCmaQ_8E2lpZlzr7pqZ3aBCnp-PgA0Yqb2FHHSNM7TE8d9k7GTueRQ/exec'
+    API_URL: 'https://script.google.com/macros/s/AKfycbwUCZbHHe9ku_aKkCmaQ_8E2lpZlzr7pqZ3aBCnp-PgA0Yqb2FHHSNM7TE8d9k7GTueRQ/exec',
+    CAIXA_LINK: 'https://autocompra.caixaconsorcio.com.br/consorcio/produtos?mtm_campaign=ampliva-google-search-Institucional&mtm_kwd=cpa&mtm_source=google&mtm_medium=search&mtm_content=na_search_na&gad_source=1&gad_campaignid=21978395693&gbraid=0AAAAAD4YKGAcbCo4HBmlisB-r1pHJLYD_&gclid=Cj0KCQjwkrzPBhCqARIsAJN460me3qZ76MjcpqRFAdU61v7Q4HeBfkHBiE8Gouk6c56TaiBkK2W-U00aAsXaEALw_wcB'
 };
 
 const app = {
@@ -22,6 +23,7 @@ const app = {
         } finally {
             this.showHome();
             this.startCarousel();
+            this.updateHeaderNav();
         }
     },
 
@@ -129,6 +131,7 @@ const app = {
         const content = document.getElementById('app-content');
         let featured = this.properties.filter(p => p.featured);
         if (featured.length === 0) featured = this.properties.slice(0, 3);
+        this.updateHeaderNav();
 
         content.innerHTML = `
             <div class="max-w-7xl mx-auto px-4 md:px-6">
@@ -205,6 +208,7 @@ const app = {
     },
 
     showDetail: function(id) {
+        this.updateHeaderNav('clear');
         const p = this.properties.find(x => x.id == id);
         const content = document.getElementById('app-content');
         window.scrollTo(0, 0);
@@ -306,6 +310,13 @@ const app = {
                     </div>
                 </div>
 
+                ${p.type === 'COMPRAR' && p.financing.includes('Caixa Econômica Federal') ? `
+                <button onclick="window.open('${CONFIG.CAIXA_LINK}')" class="w-full flex items-center justify-center gap-3 bg-white/5 border border-white/10 p-4 rounded-2xl hover:bg-white/10 transition-all group">
+                    <img src="caixa.png" class="h-8 w-auto grayscale group-hover:grayscale-0 transition-all">
+                    <span class="text-sm font-bold text-zinc-300">Simular Financiamento</span>
+                    <i class="fas fa-external-link-alt text-[10px] text-zinc-500"></i>
+                </button>` : ''}
+
                 <button class="w-full bg-primary text-black font-black py-5 rounded-3xl hover:brightness-110 transition-all shadow-lg shadow-primary/20" onclick="window.open('https://wa.me/${CONFIG.WHATSAPP}?text=Interesse: ${p.title}')">
                     TENHO INTERESSE
                 </button>
@@ -314,6 +325,7 @@ const app = {
     },
 
     showFavorites: function() {
+        this.updateHeaderNav('clear');
         const content = document.getElementById('app-content');
         const favs = this.properties.filter(p => this.favorites.includes(p.id));
         content.innerHTML = `
@@ -352,6 +364,7 @@ const app = {
     },
 
     showAbout: function() {
+        this.updateHeaderNav('clear');
         const content = document.getElementById('app-content');
         content.innerHTML = `
             <div class="max-w-2xl mx-auto text-center space-y-8 py-10">
@@ -367,6 +380,7 @@ const app = {
     },
 
     showSell: function() {
+        this.updateHeaderNav('vender');
         const content = document.getElementById('app-content');
         content.innerHTML = `
             <div class="max-w-2xl mx-auto py-10 px-4">
@@ -404,9 +418,46 @@ const app = {
         window.open(`https://wa.me/${CONFIG.WHATSAPP}?text=${text}`);
     },
 
+    resetHome: function() {
+        this.filters = { type: '', category: '', query: '' };
+        this.showHome();
+    },
+
     showContact: () => window.open(`https://wa.me/${CONFIG.WHATSAPP}`),
 
-    setFilter: function(k, v) { this.filters[k] = v; this.showHome(); },
+    setFilter: function(k, v) {
+        this.filters[k] = v;
+        this.showHome();
+        this.updateHeaderNav();
+    },
+    updateHeaderNav: function(forcedPage = null) {
+        const navs = {
+            'comprar': document.getElementById('nav-comprar'),
+            'alugar': document.getElementById('nav-alugar'),
+            'vender': document.getElementById('nav-vender')
+        };
+
+        // Reset
+        Object.values(navs).forEach(el => {
+            if (el) {
+                el.classList.remove('text-primary', 'font-black');
+                el.classList.add('text-zinc-400');
+            }
+        });
+
+        // Highlight
+        if (forcedPage && navs[forcedPage]) {
+            navs[forcedPage].classList.add('text-primary', 'font-black');
+            navs[forcedPage].classList.remove('text-zinc-400');
+        } else if (this.filters.type === 'COMPRAR') {
+            navs['comprar'].classList.add('text-primary', 'font-black');
+            navs['comprar'].classList.remove('text-zinc-400');
+        } else if (this.filters.type === 'ALUGAR') {
+            navs['alugar'].classList.add('text-primary', 'font-black');
+            navs['alugar'].classList.remove('text-zinc-400');
+        }
+    },
+
     handleSearch: function(e) { this.filters.query = e.target.value; this.renderGrid(); },
     startCarousel: function() {
         setInterval(() => {
